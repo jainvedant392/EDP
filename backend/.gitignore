@@ -1,2 +1,5 @@
 # dependencies
 /venv
+
+# environment
+.env
