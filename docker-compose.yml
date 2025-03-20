@@ -1,58 +1,62 @@
-services:
-  edp_server:
-    image: python:3.10
-    container_name: edp_server
-    working_dir: /app
-    volumes:
-      - ./backend:/app
-    ports:
-      - "8080:8080"
-    # command: >
-    #   sh -c "pip install --no-cache-dir -r requirements.txt && python manage.py runserver 0.0.0.0:8080"
-    command: >
-      sh -c "pip install --no-cache-dir -r requirements.txt &&
-      echo 'Waiting for PostgreSQL to start...' &&
-      sleep 10 &&
-      python manage.py migrate &&
-      python manage.py runserver 0.0.0.0:8080"
-    depends_on:
-      - edp_db
-    networks:
-      - network
-  edp_client:
-    image: node:21-alpine
-    container_name: edp_client
-    working_dir: /app
-    volumes:
-      - ./frontend:/app
-    ports:
-      - "3000:3000"
-    command: >
-      sh -c "npm install && npm run dev"
-    depends_on:
-      - edp_server
-    networks:
-      - network
+# services:
+#   edp_server:
+#     image: python:3.10
+#     container_name: edp_server
+#     working_dir: /app
+#     volumes:
+#       - ./backend:/app
+#     ports:
+#       - "8080:8080"
+#     # command: >
+#     #   sh -c "pip install --no-cache-dir -r requirements.txt && python manage.py runserver 0.0.0.0:8080"
+#     command: >
+#       sh -c "pip install --no-cache-dir -r requirements.txt &&
+#       echo 'Waiting for PostgreSQL to start...' &&
+#       sleep 10 &&
+#       echo '=============Create migrations=============' &&
+#       python manage.py makemigrations &&
+#       echo '=============Migrate=============' &&
+#       python manage.py migrate &&
+#       echo '=============Start server=============' &&
+#       python manage.py runserver 0.0.0.0:8080"
+#     depends_on:
+#       - edp_db
+#     networks:
+#       - network
+#   edp_client:
+#     image: node:21-alpine
+#     container_name: edp_client
+#     working_dir: /app
+#     volumes:
+#       - ./frontend:/app
+#     ports:
+#       - "3000:3000"
+#     command: >
+#       sh -c "npm install && npm run dev"
+#     depends_on:
+#       - edp_server
+#     networks:
+#       - network
 
-  edp_db:
-    image: postgres
-    container_name: edp_db
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: mypassword
-      POSTGRES_DB: postgres
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      retries: 5
-    networks:
-      - network
+#   edp_db:
+#     image: postgres
+#     container_name: edp_db
+#     environment:
+#       POSTGRES_USER: postgres
+#       POSTGRES_PASSWORD: mypassword
+#       POSTGRES_DB: postgres
+#     volumes:
+#       - postgres_data:/var/lib/postgresql/data
+#     healthcheck:
+#       test: ["CMD-SHELL", "pg_isready -U postgres"]
+#       interval: 10s
+#       retries: 5
+#     networks:
+#       - network
 
-volumes:
-  postgres_data:
+# volumes:
+#   postgres_data:
 
-networks:
-  network:
-    driver: bridge
+# networks:
+#   network:
+#     driver: bridge

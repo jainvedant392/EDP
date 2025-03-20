@@ -44,3 +44,5 @@ docker exec -it edp_client sh
 npm install {package-name}
 - To install as a dev dependency:\
 npm install {package-name} --save-dev
+
+

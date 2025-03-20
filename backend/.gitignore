@@ -1,5 +1,8 @@
-# dependencies
-/venv
-
 # environment
 .env
+
+# virtualenv
+/venv
+
+# all migrations
+*/migrations

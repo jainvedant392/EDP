@@ -43,7 +43,16 @@ INSTALLED_APPS = [
     # Third-party apps
     'rest_framework',
     # My app
-    'api',
+    'testapp',
+    'allotments',
+    'departments',
+    'diagnosis',
+    'doctors',
+    'patients',
+    'prescriptions',
+    'prescription_details',
+    'medical_tests',
+    'tests_prescribed',
 ]
 
 MIDDLEWARE = [
