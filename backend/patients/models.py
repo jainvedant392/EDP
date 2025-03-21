@@ -16,3 +16,6 @@ class Patient(models.Model):
     medical_history=models.TextField()
     profile_photo=models.ImageField(upload_to='images/')
     status=models.CharField(max_length=20) # active, deceased, discharged
+
+    def __str__(self) -> str:
+        return f"Patient: {self.name}"

@@ -2,10 +2,9 @@ from django.db import models
 
 # table for all the tests conducted in the hospital
 class MedicalTest(models.Model):
-    # _id=models.AutoField(primary_key=True)
-    test_code=models.CharField(primary_key=True, max_length=20, unique=True)
+    test_code=models.CharField(max_length=20, unique=True, primary_key=True)
     name=models.CharField(max_length=100)
-    short_name=models.CharField(max_length=20)
+    short_name=models.CharField(max_length=50)
     description=models.TextField()
     preconditions=models.TextField()
     test_category=models.CharField(max_length=20) #e.g., Blood Tests, Imaging, Pathology, Cardiology, Neurology
@@ -16,3 +15,6 @@ class MedicalTest(models.Model):
     reference_range_format=models.CharField(max_length=20) #e.g. numerical range, positive/negative
     units=models.CharField(max_length=20)
     cost=models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self) -> str:
+        return f"{self.short_name} Medical Test"

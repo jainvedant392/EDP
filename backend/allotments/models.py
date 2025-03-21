@@ -13,3 +13,6 @@ class Allotment(models.Model):
     admission_time=models.TimeField()
     discharge_date=models.DateField()
     discharge_notes=models.TextField()
+    
+    def __str__(self) -> str:
+        return f"Allotment of {self.patient_id.name} by Dr. {self.doctor_incharge_id.name}"

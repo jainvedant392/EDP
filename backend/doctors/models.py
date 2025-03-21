@@ -1,5 +1,4 @@
 from django.db import models
-# from departments.models import Department
 
 class Doctor(models.Model):
     # _id=models.AutoField(primary_key=True)
@@ -19,3 +18,6 @@ class Doctor(models.Model):
     years_of_experience=models.IntegerField()
     profile_photo=models.ImageField(upload_to='images/')
     status=models.CharField(max_length=20) # active, on-leave, retired
+
+    def __str__(self) -> str:
+        return f"Dr. {self.name}"
