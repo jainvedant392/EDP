@@ -15,7 +15,7 @@ class Patient(models.Model):
     allergies=models.TextField() # comma separated values
     medical_history=models.TextField()
     profile_photo=models.ImageField(upload_to='images/')
-    status=models.CharField(max_length=20) # active, deceased, discharged
+    status=models.CharField(max_length=20) # active, deceased, discharged, inactive(for soft-delete)
 
     def __str__(self) -> str:
         return f"Patient: {self.name}"
