@@ -6,9 +6,9 @@ class AllotmentSerializer(serializers.ModelSerializer):
         model = Allotment
         fields = '__all__'
 
-class RoomsSerializer(serializers.ModelSerializer):
+class RoomBedSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Rooms
+        model = RoomBed
         fields = '__all__'
 
 class DepartmentSerializer(serializers.ModelSerializer):

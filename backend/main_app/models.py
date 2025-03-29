@@ -13,23 +13,30 @@ class BaseModel(models.Model):
 
 class Allotment(BaseModel):
     patient_id=models.ForeignKey('main_app.Patient', on_delete=models.CASCADE)
-    room_id=models.ForeignKey('main_app.Rooms', on_delete=models.CASCADE)
-    doctor_incharge_id=models.ForeignKey('main_app.Doctor', on_delete=models.CASCADE) # why do we need incharge doctor at the time of allotment? i think we don't
+    room_bed_id=models.ForeignKey('main_app.RoomBed', on_delete=models.CASCADE)
+    # doctor_incharge_id=models.ForeignKey('main_app.Doctor', on_delete=models.CASCADE) # why do we need incharge doctor at the time of allotment? i think we don't
     admission_date=models.DateField(null=False)
     admission_time=models.TimeField(null=False)
     discharge_date=models.DateField(null=True)
     discharge_notes=models.TextField(null=True)
     
     def __str__(self) -> str:
-        return f"Allotment of {self.patient_id.name} by Dr. {self.doctor_incharge_id.name}"
+        # return f"Allotment of {self.patient_id.name} by Dr. {self.doctor_incharge_id.name}"
+        return f"""
+        Allotment of patient {self.patient_id.name} to:
+        floor {self.room_bed_id.floor_number}
+        ward {self.room_bed_id.ward_type}
+        room {self.room_bed_id.room_number}
+        bed {self.room_bed_id.bed_number}
+        on {self.admission_date}"""
 
 
-class Rooms(BaseModel):
+class RoomBed(BaseModel):
     ward_type=models.CharField(max_length=20, null=False) # general, semi-private, private
     floor_number=models.IntegerField(null=False)
     room_number=models.IntegerField(null=False)
     bed_number=models.IntegerField(null=False)
-    is_admitted=models.BooleanField(default=True)
+    is_admitted=models.BooleanField(default=False)
 
     def __str__(self) -> str:
         return f"Room: {self.room_number}, Bed: {self.bed_number}"

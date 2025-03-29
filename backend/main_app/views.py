@@ -144,7 +144,8 @@ def get_diagnoses_for_doctor(request, doctor_id):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 # TO BE CONTINUED...
-
+# YAHAN PE BAAKI KE VIEWS BANENGE RELATED TO DIAGNOSIS, PRESCRIPTIONS, PRESC_DETAILS, SINCE WOH DOCTOR CREATE KAREGA, ROUTE DECIDE KAR LENA.
+# AND ALSO TESTS RELATED VIEWS KAHAN BANENGE WOH DEKHNA HOGA.
 
 
 ######################################################### PATIENT VIEWS ######################################################################
@@ -325,4 +326,124 @@ def get_update_delete_medical_test(request, medical_test_id):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-#######################################################################
+######################################################### ALLOTMENT VIEWS ######################################################################
+# List all room and bed details (with filter options according to status - available, occupied)
+# /api/room-beds/
+@api_view(['GET'])
+def get_all_room_bed_details(request):
+    """
+    GET: List all room and bed details
+    """
+    # apply filter based on the query parameters
+    is_admitted = request.query_params.get('is_admitted', None)
+    if is_admitted is not None:
+        is_admitted = is_admitted.lower() == 'true'
+        room_beds = RoomBed.objects.filter(is_admitted=is_admitted)
+    else:
+        room_beds = RoomBed.objects.all()
+        serializer = RoomBedSerializer(room_beds, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+# Retrieve a specific room and bed details
+# /api/room-beds/<room_bed_id>/
+@api_view(['GET'])
+def get_room_bed_details(request, room_bed_id):
+    """
+    GET: Retrieve a specific room and bed details
+    """
+    room_bed_details = get_object_or_404(RoomBed, id=room_bed_id)
+    serializer = RoomBedSerializer(room_bed_details)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+# Create a bed and room
+# /api/room-beds/create/
+@api_view(['POST'])
+def create_bed_and_room(request):
+    """
+    POST: Create a new bed and room
+    """
+    serializer = RoomBedSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# Get all allotments
+# /api/allotments/
+@api_view(['GET'])
+def get_all_allotments(request):
+    """
+    GET: Get all allotments
+    """
+    allotments = Allotment.objects.all()
+    serializer = AllotmentSerializer(allotments, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+# Get allotment details of a patient
+# /api/allotments/<patient_id>/
+@api_view(['GET'])
+def get_patient_allotment(request, patient_id):
+    """
+    GET: Get a patient's allotment details
+    """
+    get_object_or_404(Patient, id=patient_id)
+    allotment = get_object_or_404(Allotment, patient_id=patient_id)
+    room_bed_details = get_object_or_404(RoomBed, id=allotment.room_bed_id.id)
+    if allotment:
+        serializer = AllotmentSerializer(allotment)
+        room_serializer = RoomBedSerializer(room_bed_details)
+        response_data = {
+            "allotment": serializer.data,
+            "room_bed_details": room_serializer.data,
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
+    else:
+        return Response({"message": "No allotment found for this patient."}, status=status.HTTP_404_NOT_FOUND)
+
+
+# Create a new allotment for a patient
+# /api/allotments/create/
+@api_view(['POST'])
+def create_allotment(request):
+    """
+    POST: Create a new allotment for a patient
+    """
+    serializer = AllotmentSerializer(data=request.data)
+    if serializer.is_valid():
+        allotment = serializer.save()
+
+        # mark the bed and room as occupied / alloted
+        room = get_object_or_404(RoomBed, id=allotment.room_bed_id.id)
+        room.is_admitted = True
+        room.save()
+        room_serializer = RoomBedSerializer(room)
+        response_data = {
+            "allotment": serializer.data,
+            "room": room_serializer.data,
+        }
+
+        return Response(response_data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# Delete an allotment
+# By deleting means deleting the particular allotment record plus marking the is_admitted field false in the roombed object linked with it
+# /api/allotments/<allotment_id>/
+@api_view(['DELETE'])
+def delete_allotment(request, allotment_id):
+    """
+    DELETE: Delete an allotment
+    """
+    allotment = get_object_or_404(Allotment, id=allotment_id)
+    room_bed = get_object_or_404(RoomBed, id=allotment.room_bed_id.id)
+    
+    # mark the bed and room as available
+    room_bed.is_admitted = False
+    room_bed.save()
+    
+    allotment.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
