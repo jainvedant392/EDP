@@ -12,8 +12,8 @@ class BaseModel(models.Model):
 
 
 class Allotment(BaseModel):
-    patient_id=models.ForeignKey('main_app.Patient', on_delete=models.CASCADE)
-    room_bed_id=models.ForeignKey('main_app.RoomBed', on_delete=models.CASCADE)
+    patient_id=models.ForeignKey('main_app.Patient', on_delete=models.PROTECT)
+    room_bed_id=models.ForeignKey('main_app.RoomBed', on_delete=models.PROTECT)
     # doctor_incharge_id=models.ForeignKey('main_app.Doctor', on_delete=models.CASCADE) # why do we need incharge doctor at the time of allotment? i think we don't
     admission_date=models.DateField(null=False)
     admission_time=models.TimeField(null=False)
@@ -45,7 +45,7 @@ class RoomBed(BaseModel):
 class Department(BaseModel):
     name=models.CharField(max_length=100)
     description=models.TextField(null=True, blank=True)
-    head_doctor_id=models.ForeignKey('main_app.Doctor', on_delete=models.CASCADE, null=True, blank=True)
+    head_doctor_id=models.ForeignKey('main_app.Doctor', on_delete=models.SET_NULL, null=True, blank=True)
     
     def __str__(self) -> str:
         return f"Department: {self.name}"
@@ -70,7 +70,7 @@ class Doctor(BaseModel):
     age=models.IntegerField()
     gender=models.CharField(choices=GENDER_CHOICES, null=True, blank=True)
     medical_license_number=models.CharField(max_length=50)
-    department_id=models.ForeignKey('main_app.Department', on_delete=models.CASCADE)
+    department_id=models.ForeignKey('main_app.Department', on_delete=models.SET_NULL, null=True, blank=True)
     working_hours=models.TextField()
     contact_number=models.CharField(max_length=15)
     email_id=models.EmailField()
@@ -146,8 +146,8 @@ class Diagnosis(BaseModel):
         ('cancelled', 'Cancelled'),
     ]
 
-    patient_id=models.ForeignKey('main_app.Patient', on_delete=models.CASCADE, default=None)
-    visiting_doctor_id=models.ForeignKey('main_app.Doctor', on_delete=models.CASCADE, default=None)
+    patient_id=models.ForeignKey('main_app.Patient', on_delete=models.PROTECT)
+    visiting_doctor_id=models.ForeignKey('main_app.Doctor', on_delete=models.PROTECT)
     diagnosis_date=models.DateField(default=timezone.now)
     diagnosis_time=models.TimeField(default=None)
     blood_pressure=models.CharField(max_length=15)
@@ -166,10 +166,10 @@ class TestPrescribed(BaseModel):
         ('cancelled', 'Cancelled'),
     ]
 
-    test_code=models.ForeignKey('main_app.MedicalTest', on_delete=models.CASCADE)
-    diagnosis_id=models.ForeignKey('main_app.Diagnosis', on_delete=models.CASCADE, related_name='tests_prescribed')
-    patient_id=models.ForeignKey('main_app.Patient', on_delete=models.CASCADE, default=None)
-    ordering_doctor_id=models.ForeignKey('main_app.Doctor', on_delete=models.CASCADE)
+    test_code=models.ForeignKey('main_app.MedicalTest', on_delete=models.PROTECT)
+    diagnosis_id=models.ForeignKey('main_app.Diagnosis', on_delete=models.PROTECT, related_name='tests_prescribed')
+    patient_id=models.ForeignKey('main_app.Patient', on_delete=models.PROTECT)
+    ordering_doctor_id=models.ForeignKey('main_app.Doctor', on_delete=models.PROTECT)
     test_date=models.DateField()
     test_time=models.TimeField()
     test_results=models.TextField()
@@ -187,9 +187,9 @@ class Prescription(BaseModel):
         ('inactive', 'Inactive'),
     ]
 
-    diagnosis_id=models.ForeignKey('main_app.Diagnosis', on_delete=models.CASCADE)
-    patient_id=models.ForeignKey('main_app.Patient', on_delete=models.CASCADE)
-    prescribed_by_doctor_id=models.ForeignKey('main_app.Doctor', on_delete=models.CASCADE)
+    diagnosis_id=models.ForeignKey('main_app.Diagnosis', on_delete=models.PROTECT)
+    patient_id=models.ForeignKey('main_app.Patient', on_delete=models.PROTECT)
+    prescribed_by_doctor_id=models.ForeignKey('main_app.Doctor', on_delete=models.PROTECT)
     prescription_date=models.DateField()
     # prescription_details=models.FileField(upload_to='prescription_details/', null=True, blank=True)
     additional_notes=models.TextField()
@@ -200,10 +200,10 @@ class Prescription(BaseModel):
 
 
 class PresciptionDetails(BaseModel):
-    prescription_id=models.ForeignKey('main_app.Prescription', on_delete=models.CASCADE)
-    diagnosis_id=models.ForeignKey('main_app.Diagnosis', on_delete=models.CASCADE)
-    patient_id=models.ForeignKey('main_app.Patient', on_delete=models.CASCADE)
-    prescribed_by_doctor_id=models.ForeignKey('main_app.Doctor', on_delete=models.CASCADE)
+    prescription_id=models.ForeignKey('main_app.Prescription', on_delete=models.PROTECT)
+    diagnosis_id=models.ForeignKey('main_app.Diagnosis', on_delete=models.PROTECT)
+    patient_id=models.ForeignKey('main_app.Patient', on_delete=models.PROTECT)
+    prescribed_by_doctor_id=models.ForeignKey('main_app.Doctor', on_delete=models.PROTECT)
     drug=models.CharField(max_length=100)
     dosage=models.CharField(max_length=100)
     frequency=models.CharField(max_length=100)
