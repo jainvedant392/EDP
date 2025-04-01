@@ -13,7 +13,7 @@ from .serializers import *
 ######################################################### DEPARTMENT VIEWS ####################################################################
 # List all departments / Create new department(s)
 # /api/departments/
-@api_view(['GET'])
+@api_view(['GET', 'POST'])
 def get_create_departments(request):
     """
     GET: List all departments
@@ -347,7 +347,7 @@ def get_diagnosis_for_patient(request, patient_id, diagnosis_id):
                     "id": detail.id, # type: ignore
                     "drug": detail.drug,
                     "dosage": detail.dosage,
-                    "frequency": detail.frequency,
+                    "method": detail.method,
                     "duration": detail.duration
                 } for detail in related_details
             ]
