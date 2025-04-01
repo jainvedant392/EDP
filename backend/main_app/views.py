@@ -132,17 +132,121 @@ def get_update_delete_doctor(request, doctor_id):
         return Response(status=status.HTTP_204_NO_CONTENT)
     
 
-# List all diagnoses for a doctor with filter options according to status - ongoing, completed, cancelled
-# /api/doctors/<doctor_id>/diagnoses/
+# List all diagnosis for a doctor with filter options according to status - ongoing, completed, cancelled
+# /api/doctors/<doctor_id>/diagnosis/
 @api_view(['GET'])
 def get_diagnoses_for_doctor(request, doctor_id):
     """
-    GET: List all diagnoses for a doctor
+    GET: List all diagnosis for a doctor
     """
-    diagnoses = Diagnosis.objects.filter(visiting_doctor_id=doctor_id)
-    serializer = DiagnosisSerializer(diagnoses, many=True)
+    diagnosis = Diagnosis.objects.filter(visiting_doctor_id=doctor_id)
+    serializer = DiagnosisSerializer(diagnosis, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
+    
 
+# Create/update diagnosis for a patient
+# Update /api/doctors/<doctor_id>/diagnosis/<patient_id>/<diagnosis_id>/
+# Create /api/doctors/<doctor_id>/diagnosis/<patient_id>/
+@api_view(['POST', 'PATCH'])
+def create_update_diagnosis(request, patient_id, diagnosis_id=None):
+    """
+    POST: Create new diagnosis
+    PATCH: Update an existing diagnosis
+    """
+     
+    if (request.method == 'POST'):
+        serializer = DiagnosisSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    elif(request.method == 'PATCH'):
+        diagnosis = get_object_or_404(Diagnosis, id=diagnosis_id, patient_id=patient_id)
+        serializer = DiagnosisSerializer(diagnosis, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)        
+
+
+#create prescription for a patient
+# /api/doctors/<doctor_id>/prescriptions/<patient_id>/
+@api_view(['POST'])
+def create_prescription(request):
+    """
+    POST: Create new prescription
+    """
+
+    serializer = PrescriptionSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+#create/update prescription detials for a patient
+#create /api/doctors/<doctor_id>/prescriptions/<patient_id>/
+#update /api/doctors/<doctor_id>/prescriptions/<patient_id>/<prescription_id>/
+@api_view(['POST', 'PUT', 'PATCH'])
+def create_update_prescription_detials(request, prescription_id=None):
+    """
+    POST: Create new prescription details
+    PUT: Update an existing prescription detail
+    PATCH: Partially update an existing prescription detail
+    """
+
+    if(request.method == 'POST'):
+        serializer = PrescriptionDetailsSerializer(data=request.data, many=(isinstance(request.data, list)))
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    elif (request.method in ['PUT', 'PATCH']):
+        presciption_details=get_object_or_404(PrescriptionDetails, id=prescription_id)
+        serializer = PrescriptionDetailsSerializer(presciption_details, data=request.data, partial=(request.method == 'PATCH'))
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+# Create/Update medical test prescribed for a patient
+# /api/doctors/<doctor_id>/tests/<patient_id>/
+# /api/doctors/<doctor_id>/tests/<patient_id>/<test_prescribed_id>/
+@api_view(['POST', 'PUT', 'PATCH'])
+def create_update_tests_prescribed(request, test_prescribed_id=None):
+    """
+    POST: Create new medical test
+    PUT: Update an existing medical test
+    PATCH: Partially update an existing medical test
+    """
+    if (request.method == 'POST'):
+        serializer = TestPrescribedSerializer(data=request.data, many=(isinstance(request.data, list)))
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    elif (request.method in ['PUT', 'PATCH']):
+        medical_test = get_object_or_404(TestPrescribed, id=test_prescribed_id)
+        serializer = TestPrescribedSerializer(medical_test, data=request.data, partial=(request.method == 'PATCH'))
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+            
 # TO BE CONTINUED...
 # YAHAN PE BAAKI KE VIEWS BANENGE RELATED TO DIAGNOSIS, PRESCRIPTIONS, PRESC_DETAILS, SINCE WOH DOCTOR CREATE KAREGA, ROUTE DECIDE KAR LENA.
 # AND ALSO TESTS RELATED VIEWS KAHAN BANENGE WOH DEKHNA HOGA.
@@ -204,20 +308,20 @@ def get_update_delete_patient(request, patient_id):
         return Response(status=status.HTTP_204_NO_CONTENT)
     
 
-# List all diagnoses for a patient
-# /api/patients/<patient_id>/diagnoses/
+# List all diagnosis for a patient
+# /api/patients/<patient_id>/diagnosis/
 @api_view(['GET'])
 def get_diagnoses_for_patient(request, patient_id):
     """
-    GET: List all diagnoses for a patient
+    GET: List all diagnosis for a patient
     """
-    diagnoses = Diagnosis.objects.filter(patient_id=patient_id)
-    serializer = DiagnosisSerializer(diagnoses, many=True)
+    diagnosis = Diagnosis.objects.filter(patient_id=patient_id)
+    serializer = DiagnosisSerializer(diagnosis, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 # Retrieve a specific diagnosis with complete details for a patient
-# /api/patients/<patient_id>/diagnoses/<diagnosis_id>/
+# /api/patients/<patient_id>/diagnosis/<diagnosis_id>/
 @api_view(['GET'])
 def get_diagnosis_for_patient(request, patient_id, diagnosis_id):
     """
@@ -227,7 +331,7 @@ def get_diagnosis_for_patient(request, patient_id, diagnosis_id):
     get_object_or_404(Patient, id=patient_id) # ensure that the patient exists
     diagnosis = get_object_or_404(Diagnosis, id=diagnosis_id, patient_id=patient_id) # ensure that the diagnosis exists
     prescriptions = Prescription.objects.filter(diagnosis_id=diagnosis_id, patient_id=patient_id)
-    prescription_details = PresciptionDetails.objects.filter(prescription_id__in=prescriptions)
+    prescription_details = PrescriptionDetails.objects.filter(prescription_id__in=prescriptions)
 
     prescriptions_data = []
     for presc in prescriptions:

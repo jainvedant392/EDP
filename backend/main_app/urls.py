@@ -31,6 +31,10 @@ from .views import (
     
     # Doctors
     get_create_doctors, get_update_delete_doctor, get_diagnoses_for_doctor,
+    create_update_diagnosis,
+    create_prescription,
+    create_update_prescription_detials,
+    create_update_tests_prescribed,
     
     # Patients
     get_create_patients, get_update_delete_patient, get_diagnoses_for_patient, get_diagnosis_for_patient,
@@ -55,6 +59,13 @@ urlpatterns = [
     path('doctors/', get_create_doctors, name='get_create_doctors'),
     path('doctors/<int:doctor_id>/', get_update_delete_doctor, name='get_update_delete_doctor'),
     path('doctors/<int:doctor_id>/diagnoses/', get_diagnoses_for_doctor, name='get_diagnoses_for_doctor'),
+    path('doctors/<int:doctor_id>/diagnoses/<int:patient_id>/', create_update_diagnosis, name='create_diagnosis'),
+    path('doctors/<int:doctor_id>/diagnoses/<int:patient_id>/<int:diagnosis_id>/', create_update_diagnosis, name='update_diagnosis'),
+    path('doctors/<doctor_id>/prescriptions/<patient_id>/',create_prescription, name='create_prescription'),
+    path('doctors/<doctor_id>/prescriptions/<patient_id>/',create_update_prescription_detials, name='create_prescription'),
+    path('doctors/<doctor_id>/prescriptions/<patient_id>/<prescription_id>/', create_update_prescription_detials, name='update_prescription'),
+    path('doctors/<doctor_id>/tests/<patient_id>/', create_update_tests_prescribed, name='create_tests_prescribed'),
+    path('doctors/<doctor_id>/tests/<patient_id>/<test_prescribed_id>/', create_update_tests_prescribed, name='update_tests_prescribed'),
 
     # Patients
     path('patients/', get_create_patients, name='get_create_patients'),

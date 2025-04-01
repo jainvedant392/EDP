@@ -199,14 +199,14 @@ class Prescription(BaseModel):
         return f"Prescription for patient {self.patient_id.name} by Dr. {self.prescribed_by_doctor_id.name} on date {self.prescription_date}"
 
 
-class PresciptionDetails(BaseModel):
+class PrescriptionDetails(BaseModel):
     prescription_id=models.ForeignKey('main_app.Prescription', on_delete=models.PROTECT)
     diagnosis_id=models.ForeignKey('main_app.Diagnosis', on_delete=models.PROTECT)
     patient_id=models.ForeignKey('main_app.Patient', on_delete=models.PROTECT)
     prescribed_by_doctor_id=models.ForeignKey('main_app.Doctor', on_delete=models.PROTECT)
     drug=models.CharField(max_length=100)
     dosage=models.CharField(max_length=100)
-    frequency=models.CharField(max_length=100)
+    method=models.CharField(max_length=100)
     duration=models.CharField(max_length=100)
 
     def __str__(self) -> str:
