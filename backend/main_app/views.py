@@ -433,45 +433,109 @@ def get_update_delete_medical_test(request, medical_test_id):
 ######################################################### ALLOTMENT VIEWS ######################################################################
 # List all room and bed details (with filter options according to status - available, occupied)
 # /api/room-beds/
-@api_view(['GET'])
-def get_all_room_bed_details(request):
-    """
-    GET: List all room and bed details
-    """
-    # apply filter based on the query parameters
-    is_admitted = request.query_params.get('is_admitted', None)
-    if is_admitted is not None:
-        is_admitted = is_admitted.lower() == 'true'
-        room_beds = RoomBed.objects.filter(is_admitted=is_admitted)
-    else:
-        room_beds = RoomBed.objects.all()
-        serializer = RoomBedSerializer(room_beds, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+# @api_view(['GET'])
+# def get_all_room_bed_details(request):
+#     """
+#     GET: List all bed details along with associated room and ward info
+#     """
+#     # Apply filter based on the query parameter 'is_admitted' → now maps to 'is_occupied'
+#     is_admitted = request.query_params.get('is_admitted', None)
+    
+#     if is_admitted is not None:
+#         is_occupied = is_admitted.lower() == 'true'
+#         beds = Bed.objects.filter(is_occupied=is_occupied)
+#     else:
+#         beds = Bed.objects.all()
+    
+#     serializer = BedSerializer(beds, many=True)
+#     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 # Retrieve a specific room and bed details
-# /api/room-beds/<room_bed_id>/
+# /api/room-beds/<bed_id>/
 @api_view(['GET'])
-def get_room_bed_details(request, room_bed_id):
+def get_room_bed_details(request, bed_id):
     """
-    GET: Retrieve a specific room and bed details
+    GET: Retrieve a specific bed's details along with room and ward info
     """
-    room_bed_details = get_object_or_404(RoomBed, id=room_bed_id)
-    serializer = RoomBedSerializer(room_bed_details)
+    bed = get_object_or_404(Bed, id=bed_id)
+    serializer = BedSerializer(bed)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-# Create a bed and room
-# /api/room-beds/create/
+# List all wards
+# /api/wards/
+@api_view(['GET'])
+def get_wards(request):
+    wards = Ward.objects.all()
+    serializer = WardSerializer(wards, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+# Create a new ward
+# /api/wards/create/
 @api_view(['POST'])
-def create_bed_and_room(request):
-    """
-    POST: Create a new bed and room
-    """
-    serializer = RoomBedSerializer(data=request.data)
+def create_ward(request):
+    serializer = WardSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# List all rooms
+# /api/rooms/
+@api_view(['GET'])
+def get_rooms(request):
+    rooms = Room.objects.all()
+    serializer = RoomSerializer(rooms, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+# Create a new room
+# /api/rooms/create/
+@api_view(['POST'])
+def create_room(request):
+    serializer = RoomSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# List all beds
+# /api/beds/
+@api_view(['GET'])
+def get_beds(request):
+    beds = Bed.objects.all()
+    serializer = BedSerializer(beds, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+# Create a new bed
+# /api/beds/create/
+@api_view(['POST'])
+def create_beds(request):
+    """
+    POST: Create one or more bed objects (accepts an array)
+    """
+    data = request.data
+
+    # If it's a list, many=True; otherwise just a single object
+    many = isinstance(data, list)
+
+    serializer = BedSerializer(data=data, many=many)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# Update a specific bed
+# /api/beds/<bed_id>/
+@api_view(['PATCH'])
+def update_bed(request, bed_id):
+    bed = get_object_or_404(Bed, id=bed_id)
+    serializer = BedSerializer(bed, data=request.data, partial=True)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

@@ -6,38 +6,43 @@ class AllotmentSerializer(serializers.ModelSerializer):
         model = Allotment
         fields = '__all__'
 
-class RoomBedSerializer(serializers.ModelSerializer):
+class WardSerializer(serializers.ModelSerializer):
     class Meta:
-        model = RoomBed
+        model = Ward
+        fields = '__all__'
+
+class RoomSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Room
+        fields = '__all__'
+
+class BedSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Bed
         fields = '__all__'
 
 class DepartmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Department
         fields = '__all__'
-        # extra_kwargs = {
-        #     'head_doctor_id': {'required': False, 'allow_null': True},
-        #     'description': {'required': False, 'allow_blank': True},
-        # }
-
 class DoctorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Doctor
         fields = '__all__'
-        # extra_kwargs = {
-        #     'profile_photo': {'required': False, 'allow_null': True},
-        # }
 
 class PatientSerializer(serializers.ModelSerializer):
+    disabilities_or_diseases = serializers.ListField(
+        child=serializers.CharField(allow_blank=True),
+        allow_empty=True
+    )
+    allergies = serializers.ListField(
+        child=serializers.CharField(allow_blank=True),
+        allow_empty=True
+    )
+
     class Meta:
         model = Patient
         fields = '__all__'
-        # extra_kwargs = {
-        #     'disabilities_or_diseases': {'required': False, 'allow_blank': True},
-        #     'allergies': {'required': False, 'allow_blank': True},
-        #     'medical_history': {'required': False, 'allow_blank': True},
-        #     'profile_photo': {'required': False, 'allow_null': True},
-        # }
 
 class MedicalTestSerializer(serializers.ModelSerializer):
     class Meta:

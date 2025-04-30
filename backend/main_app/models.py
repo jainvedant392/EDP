@@ -13,8 +13,9 @@ class BaseModel(models.Model):
 
 class Allotment(BaseModel):
     patient_id=models.ForeignKey('main_app.Patient', on_delete=models.PROTECT)
-    room_bed_id=models.ForeignKey('main_app.RoomBed', on_delete=models.PROTECT)
-    # doctor_incharge_id=models.ForeignKey('main_app.Doctor', on_delete=models.CASCADE) # why do we need incharge doctor at the time of allotment? i think we don't
+    ward_id=models.ForeignKey('main_app.Ward', on_delete=models.PROTECT, null=True, blank=True)
+    room_id=models.ForeignKey('main_app.Room', on_delete=models.PROTECT, null=True, blank=True)
+    bed_id=models.ForeignKey('main_app.Bed', on_delete=models.PROTECT, null=True, blank=True)
     admission_date=models.DateField(null=False)
     admission_time=models.TimeField(null=False)
     discharge_date=models.DateField(null=True)
@@ -24,23 +25,10 @@ class Allotment(BaseModel):
         # return f"Allotment of {self.patient_id.name} by Dr. {self.doctor_incharge_id.name}"
         return f"""
         Allotment of patient {self.patient_id.name} to:
-        floor {self.room_bed_id.floor_number}
-        ward {self.room_bed_id.ward_type}
-        room {self.room_bed_id.room_number}
-        bed {self.room_bed_id.bed_number}
+        ward {self.ward_id.ward_type if self.ward_id else 'N/A'}
+        room {self.room_id.room_number if self.room_id else 'N/A'}
+        bed {self.bed_id.bed_number if self.bed_id else 'N/A'}
         on {self.admission_date}"""
-
-
-# class RoomBed(BaseModel):
-#     ward_type=models.CharField(max_length=20, null=False) # general, semi-private, private
-#     floor_number=models.IntegerField(null=False)
-#     room_number=models.IntegerField(null=False)
-#     bed_number=models.IntegerField(null=False)
-#     is_admitted=models.BooleanField(default=False)
-
-#     def __str__(self) -> str:
-#         return f"Room: {self.room_number}, Bed: {self.bed_number}"
-
 
 #Serializers, views and routes pending for Ward, Room and Bed Model 
 class Ward(models.Model):
