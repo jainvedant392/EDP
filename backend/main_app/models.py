@@ -31,15 +31,49 @@ class Allotment(BaseModel):
         on {self.admission_date}"""
 
 
-class RoomBed(BaseModel):
-    ward_type=models.CharField(max_length=20, null=False) # general, semi-private, private
-    floor_number=models.IntegerField(null=False)
-    room_number=models.IntegerField(null=False)
-    bed_number=models.IntegerField(null=False)
-    is_admitted=models.BooleanField(default=False)
+# class RoomBed(BaseModel):
+#     ward_type=models.CharField(max_length=20, null=False) # general, semi-private, private
+#     floor_number=models.IntegerField(null=False)
+#     room_number=models.IntegerField(null=False)
+#     bed_number=models.IntegerField(null=False)
+#     is_admitted=models.BooleanField(default=False)
 
-    def __str__(self) -> str:
-        return f"Room: {self.room_number}, Bed: {self.bed_number}"
+#     def __str__(self) -> str:
+#         return f"Room: {self.room_number}, Bed: {self.bed_number}"
+
+
+#Serializers, views and routes pending for Ward, Room and Bed Model 
+class Ward(models.Model):
+    name = models.CharField(max_length=50)  # e.g., ICU, General, Maternity
+    floor_number = models.IntegerField()
+
+    def __str__(self):
+        return f"{self.name} Ward - Floor {self.floor_number}"
+
+
+class Room(models.Model):
+    ROOM_TYPES = [
+        ("Private", "Private"),
+        ("Semi-Private", "Semi-Private"),
+        ("Deluxe", "Deluxe"),
+        ("General", "General")
+    ]
+
+    ward = models.ForeignKey(Ward, on_delete=models.CASCADE)
+    room_number = models.IntegerField()
+    room_type = models.CharField(max_length=20, choices=ROOM_TYPES)  # luxury level
+
+    def __str__(self):
+        return f"{self.room_type} Room {self.room_number} in {self.ward.name}"
+
+
+class Bed(models.Model):
+    room = models.ForeignKey(Room, on_delete=models.CASCADE)
+    bed_number = models.IntegerField()
+    is_occupied = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Bed {self.bed_number} in {self.room}"
 
 
 class Department(BaseModel):
