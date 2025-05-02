@@ -2,7 +2,6 @@ from django.db import models
 from django.utils import timezone
 from django.contrib.postgres.fields import ArrayField
 
-
 class BaseModel(models.Model):
     created_at=models.DateTimeField(auto_now_add=True)
     updated_at=models.DateTimeField(auto_now=True)
@@ -90,7 +89,7 @@ class Doctor(BaseModel):
     name=models.CharField(max_length=100)
     dob=models.DateField()
     age=models.IntegerField()
-    gender=models.CharField(choices=GENDER_CHOICES, null=True, blank=True)
+    gender=models.CharField(max_length=20, choices=GENDER_CHOICES, null=True, blank=True)
     medical_license_number=models.CharField(max_length=50)
     department_id=models.ForeignKey('main_app.Department', on_delete=models.SET_NULL, null=True, blank=True)
     working_hours=models.TextField()
@@ -102,7 +101,7 @@ class Doctor(BaseModel):
     specializations=ArrayField(models.TextField())
     years_of_experience=models.IntegerField()
     profile_photo=models.ImageField(upload_to='images/', null=True, blank=True)
-    status=models.CharField(choices=STATUS_CHOICES, default='active') # active, on-leave, retired, inactive(for soft-delete)
+    status=models.CharField(max_length=20, choices=STATUS_CHOICES, default='active') # active, on-leave, retired, inactive(for soft-delete)
 
     def __str__(self) -> str:
         return f"Dr. {self.name}"
@@ -125,7 +124,7 @@ class Patient(BaseModel):
     name=models.CharField(max_length=100)
     dob=models.DateField()
     age=models.IntegerField()
-    gender=models.CharField(choices=GENDER_CHOICES, null=True, blank=True)
+    gender=models.CharField(max_length=20, choices=GENDER_CHOICES, null=True, blank=True)
     blood_group=models.CharField(max_length=5)
     contact_number=models.CharField(max_length=15)
     emergency_contact_number=models.CharField(max_length=15)
@@ -136,7 +135,7 @@ class Patient(BaseModel):
     allergies=ArrayField(models.CharField(max_length=50, null=True))
     medical_history=models.TextField(null=True, blank=True)
     profile_photo=models.ImageField(upload_to='images/', null=True, blank=True)
-    status=models.CharField(choices=STATUS_CHOICES, default='active') # active, deceased, discharged, inactive(for soft-delete)
+    status=models.CharField(max_length=20, choices=STATUS_CHOICES, default='active') # active, deceased, discharged, inactive(for soft-delete)
 
     def __str__(self) -> str:
         return f"Patient: {self.name}"
@@ -233,4 +232,3 @@ class PrescriptionDetails(BaseModel):
 
     def __str__(self) -> str:
         return f"Prescription details for patient {self.patient_id.name} by Dr. {self.prescribed_by_doctor_id.name} for drug {self.drug}"
-
