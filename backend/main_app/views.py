@@ -1,10 +1,13 @@
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework import status
 
 from django.shortcuts import get_object_or_404
 from django.db.models import Prefetch
 from django.http import JsonResponse
+
+from rest_framework.permissions import IsAuthenticated
+from .permissions import IsAdminUser, IsDoctorUser, IsPatientUser, IsStaffUser
 
 from .models import *
 from .serializers import *
@@ -14,6 +17,7 @@ from .serializers import *
 # List all departments / Create new department(s)
 # /api/departments/
 @api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated, IsAdminUser])  # Only Admin can access this
 def get_create_departments(request):
     """
     GET: List all departments
@@ -40,6 +44,7 @@ def get_create_departments(request):
 # Retrieve / Update / Delete a department
 # /api/departments/<department_id>/
 @api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
+@permission_classes([IsAuthenticated, IsAdminUser])  # Only Admin can access this
 def get_update_delete_department(request, department_id):
     """
     GET: Retrieve a department
@@ -68,6 +73,7 @@ def get_update_delete_department(request, department_id):
 # List all doctors in a department
 # /api/departments/<department_id>/doctors/
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])  # Any authenticated user can access this
 def get_doctors_in_department(request, department_id):
     """
     GET: List all doctors in a department
@@ -81,6 +87,7 @@ def get_doctors_in_department(request, department_id):
 # List all doctors / Create new doctor(s)
 # /api/doctors/
 @api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated, IsAdminUser])  # Only Admin can create doctors
 def get_create_doctors(request):
     """
     GET: List all doctors
@@ -107,6 +114,7 @@ def get_create_doctors(request):
 # Retrieve / Update / Delete a doctor
 # /api/doctors/<doctor_id>/
 @api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
+@permission_classes([IsAuthenticated, IsAdminUser])  # Only Admin can create doctors
 def get_update_delete_doctor(request, doctor_id):
     """
     GET: Retrieve a doctor
@@ -135,6 +143,7 @@ def get_update_delete_doctor(request, doctor_id):
 # List all diagnosis for a doctor with filter options according to status - ongoing, completed, cancelled
 # /api/doctors/<doctor_id>/diagnosis/
 @api_view(['GET'])
+@permission_classes([IsAuthenticated, IsDoctorUser])   # Only Doctors can access this
 def get_diagnoses_for_doctor(request, doctor_id):
     """
     GET: List all diagnosis for a doctor
@@ -148,6 +157,7 @@ def get_diagnoses_for_doctor(request, doctor_id):
 # Update /api/doctors/<doctor_id>/diagnosis/<patient_id>/<diagnosis_id>/
 # Create /api/doctors/<doctor_id>/diagnosis/<patient_id>/
 @api_view(['POST', 'PATCH'])
+@permission_classes([IsAuthenticated, IsDoctorUser])   # Only Doctors can access this
 def create_update_diagnosis(request, patient_id, diagnosis_id=None):
     """
     POST: Create new diagnosis
@@ -173,26 +183,11 @@ def create_update_diagnosis(request, patient_id, diagnosis_id=None):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)        
 
 
-#create prescription for a patient
-# /api/doctors/<doctor_id>/prescriptions/<patient_id>/
-@api_view(['POST'])
-def create_prescription(request):
-    """
-    POST: Create new prescription
-    """
-
-    serializer = PrescriptionSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
 #create/update prescription detials for a patient
 #create /api/doctors/<doctor_id>/prescriptions/<patient_id>/
 #update /api/doctors/<doctor_id>/prescriptions/<patient_id>/<prescription_id>/
 @api_view(['POST', 'PUT', 'PATCH'])
+@permission_classes([IsAuthenticated, IsDoctorUser])   # Only Doctors can access this
 def create_update_prescription_detials(request, prescription_id=None):
     """
     POST: Create new prescription details
@@ -223,6 +218,7 @@ def create_update_prescription_detials(request, prescription_id=None):
 # /api/doctors/<doctor_id>/tests/<patient_id>/
 # /api/doctors/<doctor_id>/tests/<patient_id>/<test_prescribed_id>/
 @api_view(['POST', 'PUT', 'PATCH'])
+@permission_classes([IsAuthenticated, IsDoctorUser, IsStaffUser])   # Only Doctors and Admin can access this
 def create_update_tests_prescribed(request, test_prescribed_id=None):
     """
     POST: Create new medical test
@@ -256,6 +252,7 @@ def create_update_tests_prescribed(request, test_prescribed_id=None):
 # List all patients / Create new patient(s)
 # /api/patients/
 @api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated, IsStaffUser])   # Only Staff can access this
 def get_create_patients(request):
     """
     GET: List all patients
@@ -282,6 +279,7 @@ def get_create_patients(request):
 # Retrieve / Update / Delete a patient (soft delete by marking status as inactive)
 # /api/patients/<patient_id>/
 @api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
+@permission_classes([IsAuthenticated, IsStaffUser])   # Only Staff can access this
 def get_update_delete_patient(request, patient_id):
     """
     GET: Retrieve a patient
@@ -311,6 +309,7 @@ def get_update_delete_patient(request, patient_id):
 # List all diagnosis for a patient
 # /api/patients/<patient_id>/diagnosis/
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])   # All authenticated users can access this
 def get_diagnoses_for_patient(request, patient_id):
     """
     GET: List all diagnosis for a patient
@@ -323,6 +322,7 @@ def get_diagnoses_for_patient(request, patient_id):
 # Retrieve a specific diagnosis with complete details for a patient
 # /api/patients/<patient_id>/diagnosis/<diagnosis_id>/
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])   # All authenticated users can access this
 def get_diagnosis_for_patient(request, patient_id, diagnosis_id):
     """
     GET: Retrieve a specific diagnosis info for a patient with complete details,
@@ -379,6 +379,7 @@ def get_diagnosis_for_patient(request, patient_id, diagnosis_id):
 # List all medical tests / Create new medical test(s)
 # /api/medical-tests/
 @api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated, IsAdminUser])   # Only admin can access this
 def get_create_medical_tests(request):
     """
     GET: List all medical tests
@@ -405,6 +406,7 @@ def get_create_medical_tests(request):
 # Retrieve / Update / Delete a medical test
 # /api/medical-tests/<medical_test_id>/
 @api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
+@permission_classes([IsAuthenticated, IsAdminUser])   # Only admin can access this
 def get_update_delete_medical_test(request, medical_test_id):
     """
     GET: Retrieve a medical test
@@ -454,6 +456,7 @@ def get_update_delete_medical_test(request, medical_test_id):
 # Retrieve a specific room and bed details
 # /api/room-beds/<bed_id>/
 @api_view(['GET'])
+@permission_classes([IsAuthenticated, IsStaffUser])   # Only staff can access this
 def get_room_bed_details(request, bed_id):
     """
     GET: Retrieve a specific bed's details along with room and ward info
@@ -466,6 +469,7 @@ def get_room_bed_details(request, bed_id):
 # List all wards
 # /api/wards/
 @api_view(['GET'])
+@permission_classes([IsAuthenticated, IsStaffUser])   # Only staff can access this
 def get_wards(request):
     wards = Ward.objects.all()
     serializer = WardSerializer(wards, many=True)
@@ -474,6 +478,7 @@ def get_wards(request):
 # Create a new ward
 # /api/wards/create/
 @api_view(['POST'])
+@permission_classes([IsAuthenticated, IsAdminUser])   # Only Admin can access this
 def create_ward(request):
     serializer = WardSerializer(data=request.data)
     if serializer.is_valid():
@@ -485,6 +490,7 @@ def create_ward(request):
 # List all rooms
 # /api/rooms/
 @api_view(['GET'])
+@permission_classes([IsAuthenticated, IsStaffUser])   # Only staff can access this
 def get_rooms(request):
     rooms = Room.objects.all()
     serializer = RoomSerializer(rooms, many=True)
@@ -493,6 +499,7 @@ def get_rooms(request):
 # Create a new room
 # /api/rooms/create/
 @api_view(['POST'])
+@permission_classes([IsAuthenticated, IsAdminUser])   # Only Admin can access this
 def create_room(request):
     serializer = RoomSerializer(data=request.data)
     if serializer.is_valid():
@@ -504,6 +511,7 @@ def create_room(request):
 # List all beds
 # /api/beds/
 @api_view(['GET'])
+@permission_classes([IsAuthenticated, IsStaffUser])   # Only staff can access this
 def get_beds(request):
     beds = Bed.objects.all()
     serializer = BedSerializer(beds, many=True)
@@ -512,6 +520,7 @@ def get_beds(request):
 # Create a new bed
 # /api/beds/create/
 @api_view(['POST'])
+@permission_classes([IsAuthenticated, IsAdminUser])   # Only Admin can access this
 def create_beds(request):
     """
     POST: Create one or more bed objects (accepts an array)
@@ -530,6 +539,7 @@ def create_beds(request):
 # Update a specific bed
 # /api/beds/<bed_id>/
 @api_view(['PATCH'])
+@permission_classes([IsAuthenticated, IsStaffUser])   # Only staff can access this
 def update_bed(request, bed_id):
     bed = get_object_or_404(Bed, id=bed_id)
     serializer = BedSerializer(bed, data=request.data, partial=True)
@@ -542,6 +552,7 @@ def update_bed(request, bed_id):
 # Get all allotments
 # /api/allotments/
 @api_view(['GET'])
+@permission_classes([IsAuthenticated, IsStaffUser])   # Only staff can access this
 def get_all_allotments(request):
     """
     GET: Get all allotments
@@ -554,6 +565,7 @@ def get_all_allotments(request):
 # Get allotment details of a patient
 # /api/allotments/<patient_id>/
 @api_view(['GET'])
+@permission_classes([IsAuthenticated, IsStaffUser])   # Only staff can access this
 def get_patient_allotment(request, patient_id):
     """
     GET: Get a patient's allotment details
@@ -576,6 +588,7 @@ def get_patient_allotment(request, patient_id):
 # Create a new allotment for a patient
 # /api/allotments/create/
 @api_view(['POST'])
+@permission_classes([IsAuthenticated, IsStaffUser])   # Only staff can access this
 def create_allotment(request):
     """
     POST: Create a new allotment for a patient
@@ -602,6 +615,7 @@ def create_allotment(request):
 # By deleting means deleting the particular allotment record plus marking the is_admitted field false in the roombed object linked with it
 # /api/allotments/<allotment_id>/
 @api_view(['DELETE'])
+@permission_classes([IsAuthenticated, IsStaffUser])   # Only staff can access this
 def delete_allotment(request, allotment_id):
     """
     DELETE: Delete an allotment

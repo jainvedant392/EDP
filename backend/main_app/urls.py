@@ -6,7 +6,6 @@ from .views import (
     # Doctors
     get_create_doctors, get_update_delete_doctor, get_diagnoses_for_doctor,
     create_update_diagnosis,
-    create_prescription,
     create_update_prescription_detials,
     create_update_tests_prescribed,
     
@@ -21,7 +20,7 @@ from .views import (
     get_wards, create_ward, get_rooms, create_room, get_beds, create_beds, update_bed,
     
     # Allotments
-    get_all_allotments, get_patient_allotment, create_allotment, delete_allotment
+    get_all_allotments, get_patient_allotment, create_allotment, delete_allotment,
 )
 
 urlpatterns = [
@@ -36,7 +35,6 @@ urlpatterns = [
     path('doctors/<int:doctor_id>/diagnoses/', get_diagnoses_for_doctor, name='get_diagnoses_for_doctor'),
     path('doctors/<int:doctor_id>/diagnoses/<int:patient_id>/', create_update_diagnosis, name='create_diagnosis'),
     path('doctors/<int:doctor_id>/diagnoses/<int:patient_id>/<int:diagnosis_id>/', create_update_diagnosis, name='update_diagnosis'),
-    path('doctors/<doctor_id>/prescriptions/<patient_id>/',create_prescription, name='create_prescription'),
     path('doctors/<doctor_id>/prescriptions/<patient_id>/',create_update_prescription_detials, name='create_prescription'),
     path('doctors/<doctor_id>/prescriptions/<patient_id>/<prescription_id>/', create_update_prescription_detials, name='update_prescription'),
     path('doctors/<doctor_id>/tests/<patient_id>/', create_update_tests_prescribed, name='create_tests_prescribed'),
