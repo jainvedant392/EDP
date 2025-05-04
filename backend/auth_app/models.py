@@ -1,6 +1,6 @@
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.db import models
-from main_app.models import Patient 
+from main_app.models import Patient, Doctor
 
 class CustomUserManager(BaseUserManager):
     
@@ -31,6 +31,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     patient = models.ForeignKey(Patient, on_delete=models.SET_NULL, null=True, blank=True)
+    doctor = models.ForeignKey(Doctor, on_delete=models.SET_NULL, null=True, blank=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
