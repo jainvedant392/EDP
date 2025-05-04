@@ -188,7 +188,7 @@ class TestPrescribed(BaseModel):
     ]
 
     test_code=models.ForeignKey('main_app.MedicalTest', on_delete=models.PROTECT)
-    diagnosis_id=models.ForeignKey('main_app.Diagnosis', on_delete=models.PROTECT, related_name='tests_prescribed')
+    prescription_id=models.ForeignKey('main_app.Prescription', on_delete=models.PROTECT, null=True, blank=True)
     patient_id=models.ForeignKey('main_app.Patient', on_delete=models.PROTECT)
     ordering_doctor_id=models.ForeignKey('main_app.Doctor', on_delete=models.PROTECT)
     test_date=models.DateField()
@@ -212,7 +212,6 @@ class Prescription(BaseModel):
     patient_id=models.ForeignKey('main_app.Patient', on_delete=models.PROTECT)
     prescribed_by_doctor_id=models.ForeignKey('main_app.Doctor', on_delete=models.PROTECT)
     prescription_date=models.DateField()
-    # prescription_details=models.FileField(upload_to='prescription_details/', null=True, blank=True)
     additional_notes=models.TextField()
     status=models.CharField(max_length=15, default='inactive') # active, inactive
 

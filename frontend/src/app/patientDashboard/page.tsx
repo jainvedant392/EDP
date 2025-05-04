@@ -201,7 +201,7 @@ export default function PatientDashboard() {
 
         <div className='relative h-32 w-32 overflow-hidden rounded-full border-4 border-[#18B7CD]'>
           <Image
-            src='/api/placeholder/128/128'
+            src=''
             alt={patientData.name}
             width={128}
             height={128}
