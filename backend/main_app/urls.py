@@ -20,7 +20,10 @@ from .views import (
     get_wards, create_ward, get_rooms, create_room, get_beds, create_beds, update_bed,
     
     # Allotments
-    get_all_allotments, get_patient_allotment, create_allotment, delete_allotment,
+    # get_all_allotments, get_patient_allotment, create_allotment, delete_allotment,
+
+
+    create_full_diagnosis, get_full_diagnosis_details
 )
 
 urlpatterns = [
@@ -37,9 +40,13 @@ urlpatterns = [
     path('doctors/<int:doctor_id>/diagnoses/<int:patient_id>/<int:diagnosis_id>/', create_update_diagnosis, name='update_diagnosis'),
     path('doctors/<doctor_id>/prescriptions/<patient_id>/',create_update_prescription_detials, name='create_prescription'),
     path('doctors/<doctor_id>/prescriptions/<patient_id>/<prescription_id>/', create_update_prescription_detials, name='update_prescription'),
-    path('doctors/<doctor_id>/tests/<patient_id>/', create_update_tests_prescribed, name='create_tests_prescribed'),
-    path('doctors/<doctor_id>/tests/<patient_id>/<test_prescribed_id>/', create_update_tests_prescribed, name='update_tests_prescribed'),
+    # path('doctors/<doctor_id>/tests/<patient_id>/', create_update_tests_prescribed, name='create_tests_prescribed'),
+    # path('doctors/<doctor_id>/tests/<patient_id>/<test_prescribed_id>/', create_update_tests_prescribed, name='update_tests_prescribed'),
 
+    # Diagnoses
+    path('diagnoses/<int:diagnosis_id>/tests/', create_update_tests_prescribed, name='create_update_tests_prescribed'),
+    path('diagnoses/<int:diagnosis_id>/tests/<int:test_prescribed_id>/', create_update_tests_prescribed, name='update_tests_prescribed'),
+    
     # Patients
     path('patients/', get_create_patients, name='get_create_patients'),
     path('patients/<int:patient_id>/', get_update_delete_patient, name='get_update_delete_patient'),
@@ -62,8 +69,14 @@ urlpatterns = [
     path('beds/<int:bed_id>/', update_bed, name='update_bed'),
 
     # Allotments
-    path('allotments/', get_all_allotments, name='get_all_allotments'),
-    path('allotments/<int:patient_id>/', get_patient_allotment, name='get_patient_allotment'),
-    path('allotments/create/', create_allotment, name='create_allotment'),
-    path('allotments/<int:allotment_id>/', delete_allotment, name='delete_allotment'),
+    # path('allotments/', get_all_allotments, name='get_all_allotments'),
+    # path('allotments/<int:patient_id>/', get_patient_allotment, name='get_patient_allotment'),
+    # path('allotments/create/', create_allotment, name='create_allotment'),
+    # path('allotments/<int:allotment_id>/', delete_allotment, name='delete_allotment'),
+
+    # APIS FOR THE DOCTOR FLOW IN FRONTEND
+    path('create-full-diagnosis/', create_full_diagnosis, name='create_full_diagnosis'),
+    path('diagnosis-details/<int:diagnosis_id>/', get_full_diagnosis_details, name='get_full_diagnosis_details'),
+    path('diagnoses/patient/<int:patient_id>/', get_diagnoses_for_patient, name='get_diagnoses_for_patient'),
+    path('diagnoses/doctor/<int:doctor_id>/', get_diagnoses_for_doctor, name='get_diagnoses_for_doctor'),
 ]

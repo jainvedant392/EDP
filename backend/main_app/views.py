@@ -5,6 +5,7 @@ from rest_framework import status
 from django.shortcuts import get_object_or_404
 from django.db.models import Prefetch
 from django.http import JsonResponse
+from django.db import transaction
 
 from rest_framework.permissions import IsAuthenticated
 from .permissions import IsAdminUser, IsDoctorUser, IsPatientUser, IsStaffUser
@@ -142,15 +143,15 @@ def get_update_delete_doctor(request, doctor_id):
 
 # List all diagnosis for a doctor with filter options according to status - ongoing, completed, cancelled
 # /api/doctors/<doctor_id>/diagnosis/
-@api_view(['GET'])
-@permission_classes([IsAuthenticated, IsDoctorUser])   # Only Doctors can access this
-def get_diagnoses_for_doctor(request, doctor_id):
-    """
-    GET: List all diagnosis for a doctor
-    """
-    diagnosis = Diagnosis.objects.filter(visiting_doctor_id=doctor_id)
-    serializer = DiagnosisSerializer(diagnosis, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+# @api_view(['GET'])
+# @permission_classes([IsAuthenticated, IsDoctorUser])   # Only Doctors can access this
+# def get_diagnoses_for_doctor(request, doctor_id):
+#     """
+#     GET: List all diagnosis for a doctor
+#     """
+#     diagnosis = Diagnosis.objects.filter(visiting_doctor_id=doctor_id)
+#     serializer = DiagnosisSerializer(diagnosis, many=True)
+#     return Response(serializer.data, status=status.HTTP_200_OK)
     
 
 # Create/update diagnosis for a patient
@@ -158,13 +159,12 @@ def get_diagnoses_for_doctor(request, doctor_id):
 # Create /api/doctors/<doctor_id>/diagnosis/<patient_id>/
 @api_view(['POST', 'PATCH'])
 @permission_classes([IsAuthenticated, IsDoctorUser])   # Only Doctors can access this
-def create_update_diagnosis(request, patient_id, diagnosis_id=None):
+def create_update_diagnosis(request, doctor_id, patient_id, diagnosis_id=None):
     """
     POST: Create new diagnosis
     PATCH: Update an existing diagnosis
     """
-     
-    if (request.method == 'POST'):
+    if request.method == 'POST':
         serializer = DiagnosisSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -172,7 +172,7 @@ def create_update_diagnosis(request, patient_id, diagnosis_id=None):
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-    elif(request.method == 'PATCH'):
+    elif request.method == 'PATCH':
         diagnosis = get_object_or_404(Diagnosis, id=diagnosis_id, patient_id=patient_id)
         serializer = DiagnosisSerializer(diagnosis, data=request.data, partial=True)
 
@@ -180,7 +180,7 @@ def create_update_diagnosis(request, patient_id, diagnosis_id=None):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 #create/update prescription detials for a patient
@@ -215,31 +215,42 @@ def create_update_prescription_detials(request, prescription_id=None):
     
 
 # Create/Update medical test prescribed for a patient
-# /api/doctors/<doctor_id>/tests/<patient_id>/
-# /api/doctors/<doctor_id>/tests/<patient_id>/<test_prescribed_id>/
+# /api/diagnoses/<diagnosis_id>/tests/<patient_id>/
+# /api/diagnoses/<diagnosis_id>/tests/<patient_id>/<test_prescribed_id>/
 @api_view(['POST', 'PUT', 'PATCH'])
 @permission_classes([IsAuthenticated, IsDoctorUser, IsStaffUser])   # Only Doctors and Admin can access this
-def create_update_tests_prescribed(request, test_prescribed_id=None):
+def create_update_tests_prescribed(request, diagnosis_id=None, test_prescribed_id=None):
     """
-    POST: Create new medical test
-    PUT: Update an existing medical test
-    PATCH: Partially update an existing medical test
+    POST: Create new test(s) for a diagnosis
+    PUT/PATCH: Update a specific test
     """
-    if (request.method == 'POST'):
-        serializer = TestPrescribedSerializer(data=request.data, many=(isinstance(request.data, list)))
+
+    if request.method == 'POST':
+        is_bulk = isinstance(request.data, list)
+        serializer = TestPrescribedSerializer(
+            data=request.data,
+            many=is_bulk,
+            context={'diagnosis_id': diagnosis_id}
+        )
+
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-    elif (request.method in ['PUT', 'PATCH']):
-        medical_test = get_object_or_404(TestPrescribed, id=test_prescribed_id)
-        serializer = TestPrescribedSerializer(medical_test, data=request.data, partial=(request.method == 'PATCH'))
+
+    elif request.method in ['PUT', 'PATCH']:
+        test = get_object_or_404(TestPrescribed, id=test_prescribed_id)
+        serializer = TestPrescribedSerializer(
+            test,
+            data=request.data,
+            partial=(request.method == 'PATCH')
+        )
 
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
             
@@ -308,15 +319,15 @@ def get_update_delete_patient(request, patient_id):
 
 # List all diagnosis for a patient
 # /api/patients/<patient_id>/diagnosis/
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])   # All authenticated users can access this
-def get_diagnoses_for_patient(request, patient_id):
-    """
-    GET: List all diagnosis for a patient
-    """
-    diagnosis = Diagnosis.objects.filter(patient_id=patient_id)
-    serializer = DiagnosisSerializer(diagnosis, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+# @api_view(['GET'])
+# @permission_classes([IsAuthenticated])   # All authenticated users can access this
+# def get_diagnoses_for_patient(request, patient_id):
+#     """
+#     GET: List all diagnosis for a patient
+#     """
+#     diagnosis = Diagnosis.objects.filter(patient_id=patient_id)
+#     serializer = DiagnosisSerializer(diagnosis, many=True)
+#     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 # Retrieve a specific diagnosis with complete details for a patient
@@ -564,68 +575,195 @@ def get_all_allotments(request):
 
 # Get allotment details of a patient
 # /api/allotments/<patient_id>/
-@api_view(['GET'])
-@permission_classes([IsAuthenticated, IsStaffUser])   # Only staff can access this
-def get_patient_allotment(request, patient_id):
-    """
-    GET: Get a patient's allotment details
-    """
-    get_object_or_404(Patient, id=patient_id)
-    allotment = get_object_or_404(Allotment, patient_id=patient_id)
-    room_bed_details = get_object_or_404(RoomBed, id=allotment.room_bed_id.id)
-    if allotment:
-        serializer = AllotmentSerializer(allotment)
-        room_serializer = RoomBedSerializer(room_bed_details)
-        response_data = {
-            "allotment": serializer.data,
-            "room_bed_details": room_serializer.data,
-        }
-        return Response(response_data, status=status.HTTP_200_OK)
-    else:
-        return Response({"message": "No allotment found for this patient."}, status=status.HTTP_404_NOT_FOUND)
+# @api_view(['GET'])
+# @permission_classes([IsAuthenticated, IsStaffUser])   # Only staff can access this
+# def get_patient_allotment(request, patient_id):
+#     """
+#     GET: Get a patient's allotment details
+#     """
+#     get_object_or_404(Patient, id=patient_id)
+#     allotment = get_object_or_404(Allotment, patient_id=patient_id)
+#     room_bed_details = get_object_or_404(RoomBed, id=allotment.room_bed_id.id)
+#     if allotment:
+#         serializer = AllotmentSerializer(allotment)
+#         room_serializer = RoomBedSerializer(room_bed_details)
+#         response_data = {
+#             "allotment": serializer.data,
+#             "room_bed_details": room_serializer.data,
+#         }
+#         return Response(response_data, status=status.HTTP_200_OK)
+#     else:
+#         return Response({"message": "No allotment found for this patient."}, status=status.HTTP_404_NOT_FOUND)
 
 
 # Create a new allotment for a patient
 # /api/allotments/create/
-@api_view(['POST'])
-@permission_classes([IsAuthenticated, IsStaffUser])   # Only staff can access this
-def create_allotment(request):
-    """
-    POST: Create a new allotment for a patient
-    """
-    serializer = AllotmentSerializer(data=request.data)
-    if serializer.is_valid():
-        allotment = serializer.save()
+# @api_view(['POST'])
+# @permission_classes([IsAuthenticated, IsStaffUser])   # Only staff can access this
+# def create_allotment(request):
+#     """
+#     POST: Create a new allotment for a patient
+#     """
+#     serializer = AllotmentSerializer(data=request.data)
+#     if serializer.is_valid():
+#         allotment = serializer.save()
 
-        # mark the bed and room as occupied / alloted
-        room = get_object_or_404(RoomBed, id=allotment.room_bed_id.id)
-        room.is_admitted = True
-        room.save()
-        room_serializer = RoomBedSerializer(room)
-        response_data = {
-            "allotment": serializer.data,
-            "room": room_serializer.data,
-        }
+#         # mark the bed and room as occupied / alloted
+#         room = get_object_or_404(RoomBed, id=allotment.room_bed_id.id)
+#         room.is_admitted = True
+#         room.save()
+#         room_serializer = RoomBedSerializer(room)
+#         response_data = {
+#             "allotment": serializer.data,
+#             "room": room_serializer.data,
+#         }
 
-        return Response(response_data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#         return Response(response_data, status=status.HTTP_201_CREATED)
+#     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 # Delete an allotment
 # By deleting means deleting the particular allotment record plus marking the is_admitted field false in the roombed object linked with it
 # /api/allotments/<allotment_id>/
-@api_view(['DELETE'])
-@permission_classes([IsAuthenticated, IsStaffUser])   # Only staff can access this
-def delete_allotment(request, allotment_id):
-    """
-    DELETE: Delete an allotment
-    """
-    allotment = get_object_or_404(Allotment, id=allotment_id)
-    room_bed = get_object_or_404(RoomBed, id=allotment.room_bed_id.id)
+# @api_view(['DELETE'])
+# @permission_classes([IsAuthenticated, IsStaffUser])   # Only staff can access this
+# def delete_allotment(request, allotment_id):
+#     """
+#     DELETE: Delete an allotment
+#     """
+#     allotment = get_object_or_404(Allotment, id=allotment_id)
+#     room_bed = get_object_or_404(RoomBed, id=allotment.room_bed_id.id)
     
-    # mark the bed and room as available
-    room_bed.is_admitted = False
-    room_bed.save()
+#     # mark the bed and room as available
+#     room_bed.is_admitted = False
+#     room_bed.save()
     
-    allotment.delete()
-    return Response(status=status.HTTP_204_NO_CONTENT)
+#     allotment.delete()
+#     return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+####################################################### APIS THE FOR DOCTOR FLOW IN FRONTEND ###################################################
+
+@api_view(['POST'])
+def create_full_diagnosis(request):
+    """
+    POST: Create a diagnosis and optionally a prescription with details and tests
+    """
+    serializer = DiagnosisFullCreateSerializer(data=request.data)
+    
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        with transaction.atomic():
+            validated_data = serializer.validated_data
+            prescription_data = validated_data.pop('prescription', None)
+
+            # Create Diagnosis
+            diagnosis = Diagnosis.objects.create(**validated_data)
+
+            if prescription_data:
+                # Attach required foreign keys from diagnosis
+                prescription_data['diagnosis_id'] = diagnosis
+                prescription_data['patient_id'] = diagnosis.patient_id
+                prescription_data['prescribed_by_doctor_id'] = diagnosis.visiting_doctor_id
+
+                # Pop nested lists
+                prescription_details = prescription_data.pop('prescription_details', [])
+                tests_prescribed = prescription_data.pop('tests_prescribed', [])
+
+                # Create Prescription
+                prescription = Prescription.objects.create(**prescription_data)
+
+                # Create PrescriptionDetails (medicines)
+                for detail in prescription_details:
+                    PrescriptionDetails.objects.create(
+                        prescription_id=prescription,
+                        diagnosis_id=diagnosis,
+                        patient_id=diagnosis.patient_id,
+                        prescribed_by_doctor_id=diagnosis.visiting_doctor_id,
+                        **detail
+                    )
+
+                # Create TestPrescribed (tests)
+                for test in tests_prescribed:
+                    TestPrescribed.objects.create(
+                        prescription_id=prescription,
+                        patient_id=diagnosis.patient_id,
+                        ordering_doctor_id=diagnosis.visiting_doctor_id,
+                        **test
+                    )
+
+        return Response({"message": "Diagnosis and optional prescription created successfully."}, status=status.HTTP_201_CREATED)
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+def get_full_diagnosis_details(request, diagnosis_id):
+    """
+    GET: Retrieve a diagnosis, its prescription (if any), prescription details (medicines), and tests prescribed
+    """
+    try:
+        diagnosis = Diagnosis.objects.get(id=diagnosis_id)
+    except Diagnosis.DoesNotExist:
+        return Response({"error": "Diagnosis not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    # Diagnosis base data
+    diagnosis_data = {
+        "id": diagnosis.id,
+        "patient_id": diagnosis.patient_id.id,
+        "doctor_id": diagnosis.visiting_doctor_id.id,
+        "diagnosis_date": diagnosis.diagnosis_date,
+        "diagnosis_time": diagnosis.diagnosis_time,
+        "blood_pressure": diagnosis.blood_pressure,
+        "blood_sugar": diagnosis.blood_sugar,
+        "SPo2": diagnosis.SPo2,
+        "heart_rate": diagnosis.heart_rate,
+        "summary": diagnosis.diagnosis_summary,
+        "tests": diagnosis.tests,
+        "status": diagnosis.status
+    }
+
+    # Check if there's a prescription linked to this diagnosis
+    prescription = Prescription.objects.filter(diagnosis_id=diagnosis).first()
+    if prescription:
+        prescription_details = PrescriptionDetails.objects.filter(prescription_id=prescription)
+        tests_prescribed = TestPrescribed.objects.filter(prescription_id=prescription)
+
+        diagnosis_data["prescription"] = {
+            "id": prescription.id,
+            "prescribed_by": prescription.prescribed_by_doctor_id.id,
+            "date": prescription.prescription_date,
+            "notes": prescription.additional_notes,
+            "status": prescription.status,
+            "medicines": PrescriptionDetailsSerializer(prescription_details, many=True).data,
+            "tests": TestPrescribedSerializer(tests_prescribed, many=True).data
+        }
+    else:
+        diagnosis_data["prescription"] = None
+
+    return Response(diagnosis_data, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])   # All authenticated users can access this
+def get_diagnoses_for_patient(request, patient_id):
+    """
+    GET: List all diagnosis for a patient
+    """
+    diagnosis = Diagnosis.objects.filter(patient_id=patient_id)
+    serializer = DiagnosisSerializer(diagnosis, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsDoctorUser])   # Only Doctors can access this
+def get_diagnoses_for_doctor(request, doctor_id):
+    """
+    GET: List all diagnosis for a doctor
+    """
+    diagnosis = Diagnosis.objects.filter(visiting_doctor_id=doctor_id)
+    serializer = DiagnosisSerializer(diagnosis, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
