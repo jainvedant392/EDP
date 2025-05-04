@@ -40,11 +40,12 @@ class RoleBasedLoginView(APIView):
             user = CustomUser.objects.filter(email=email, role=role).first()
 
         if user is None or not user.check_password(password):
-            return Response({'error': 'Invalid credentials'}, status=401)
+            return Response({'error': 'Invalid credentials', 'password':password}, status=401)
 
         refresh = RefreshToken.for_user(user)
         return Response({
             'refresh': str(refresh),
             'access': str(refresh.access_token),
-            'role': user.role
+            'role': user.role,
+            'id': 4,
         })
