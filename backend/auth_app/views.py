@@ -47,5 +47,5 @@ class RoleBasedLoginView(APIView):
             'refresh': str(refresh),
             'access': str(refresh.access_token),
             'role': user.role,
-            'id': 4,
+            'id': 1,
         })

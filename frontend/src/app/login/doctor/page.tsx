@@ -10,12 +10,35 @@ export default function DoctorLoginPage() {
   const [password, setPassword] = useState('')
   const router = useRouter()
 
+  async function fetchDoctorDetails(token, id){
+
+    const config = {
+      method: 'get',
+      maxBodyLength: Infinity,
+      url: `http://localhost:8000/api/doctors/${id}/`,
+      headers: { 
+        'Authorization': `Bearer ${token}`
+      }
+    };
+    
+    async function makeRequest() {
+      try {
+        const response = await axios.request(config);
+        localStorage.setItem('doctorData', JSON.stringify(response.data))
+      }
+      catch (error) {
+        console.log(error);
+      }
+    }
+    
+    makeRequest();
+  }
   async function LoginDoctor() {
     const data = new URLSearchParams()
     data.append('email', email)
     data.append('password', password)
 
-    try{
+    try {
       const result = await axios.post(
         'http://localhost:8000/login/doctor/',
         data,
@@ -27,12 +50,18 @@ export default function DoctorLoginPage() {
       )
 
       console.log(result.data)
-      localStorage.setItem('token', result.data.access)
-      localStorage.setItem('doctor_id', result.data.id)
-       // Redirect to doctor dashboard on successful login
-    }
-    catch{
-      window.alert("Invalid credentials")
+      const token=result.data.access
+      const doctor_id=result.data.id
+
+      localStorage.setItem('token', token)
+      localStorage.setItem('doctor_id', doctor_id)
+
+      await fetchDoctorDetails(token, doctor_id)
+      router.push('/doctorDashboard/')
+      
+      // Redirect to doctor dashboard on successful login
+    } catch {
+      window.alert('Invalid credentials')
     }
   }
 

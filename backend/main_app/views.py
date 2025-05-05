@@ -115,7 +115,7 @@ def get_create_doctors(request):
 # Retrieve / Update / Delete a doctor
 # /api/doctors/<doctor_id>/
 @api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
-@permission_classes([IsAuthenticated, IsAdminUser])  # Only Admin can create doctors
+@permission_classes([IsAuthenticated, IsDoctorUser])  # Only doctors can create doctors
 def get_update_delete_doctor(request, doctor_id):
     """
     GET: Retrieve a doctor
@@ -290,7 +290,7 @@ def get_create_patients(request):
 # Retrieve / Update / Delete a patient (soft delete by marking status as inactive)
 # /api/patients/<patient_id>/
 @api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
-@permission_classes([IsAuthenticated, IsStaffUser])   # Only Staff can access this
+@permission_classes([IsAuthenticated, IsDoctorUser])   # Only doctor can access this
 def get_update_delete_patient(request, patient_id):
     """
     GET: Retrieve a patient
