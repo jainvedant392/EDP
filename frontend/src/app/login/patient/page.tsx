@@ -5,13 +5,15 @@ import Image from 'next/image'
 import Link from 'next/link'
 
 export default function PatientLoginPage() {
-  const [patientId, setPatientId] = useState('')
+  const [aadhaar, setAadhaar] = useState('')  
+  const [password, setPassword] = useState('')  
+
   const router = useRouter()
 
   const handleSubmit = e => {
     e.preventDefault()
     // In a real app, you would handle authentication here
-    console.log('Patient login with ID:', patientId)
+    console.log('Patient login with ID:', aadhaar, password)
     // Redirect to patient dashboard on successful login
   }
 
@@ -74,9 +76,19 @@ export default function PatientLoginPage() {
                   <input
                     type='text'
                     className='w-full rounded-full border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-500'
-                    placeholder='Enter Patient ID'
-                    value={patientId}
-                    onChange={e => setPatientId(e.target.value)}
+                    placeholder='Enter Aadhaar'
+                    value={aadhaar}
+                    onChange={e => setAadhaar(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className='mb-4'>
+                  <input
+                    type='text'
+                    className='w-full rounded-full border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-500'
+                    placeholder='Enter password'
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
                     required
                   />
                 </div>

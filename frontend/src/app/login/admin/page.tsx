@@ -5,13 +5,14 @@ import Image from 'next/image'
 import Link from 'next/link'
 
 export default function AdminLoginPage() {
-  const [adminId, setAdminId] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const router = useRouter()
 
   const handleSubmit = e => {
     e.preventDefault()
     // In a real app, you would handle authentication here
-    console.log('Admin login with ID:', adminId)
+    console.log('Admin login with ID:', email, password)
     // Redirect to admin dashboard on successful login
   }
 
@@ -74,9 +75,19 @@ export default function AdminLoginPage() {
                   <input
                     type='text'
                     className='w-full rounded-full border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-500'
-                    placeholder='Enter Admin ID'
-                    value={adminId}
-                    onChange={e => setAdminId(e.target.value)}
+                    placeholder='Enter Email'
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className='mb-4'>
+                  <input
+                    type='password'
+                    className='w-full rounded-full border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-500'
+                    placeholder='Enter password'
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
                     required
                   />
                 </div>
@@ -88,21 +99,6 @@ export default function AdminLoginPage() {
                   Continue
                 </button>
               </form>
-
-              <div className='mt-4 flex justify-between text-sm'>
-                <Link
-                  href='/admin/register'
-                  className='text-cyan-500 hover:underline'
-                >
-                  Register here
-                </Link>
-                <Link
-                  href='/admin/forgot-id'
-                  className='text-gray-500 hover:underline'
-                >
-                  Forgot Admin ID
-                </Link>
-              </div>
             </div>
           </div>
         </div>

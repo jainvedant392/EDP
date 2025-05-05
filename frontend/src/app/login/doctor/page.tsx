@@ -3,16 +3,72 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
+import axios from 'axios'
 
 export default function DoctorLoginPage() {
-  const [doctorId, setDoctorId] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const router = useRouter()
 
-  const handleSubmit = e => {
+  async function fetchDoctorDetails(token, id){
+
+    const config = {
+      method: 'get',
+      maxBodyLength: Infinity,
+      url: `http://localhost:8000/api/doctors/${id}/`,
+      headers: { 
+        'Authorization': `Bearer ${token}`
+      }
+    };
+    
+    async function makeRequest() {
+      try {
+        const response = await axios.request(config);
+        localStorage.setItem('doctorData', JSON.stringify(response.data))
+      }
+      catch (error) {
+        console.log(error);
+      }
+    }
+    
+    makeRequest();
+  }
+  async function LoginDoctor() {
+    const data = new URLSearchParams()
+    data.append('email', email)
+    data.append('password', password)
+
+    try {
+      const result = await axios.post(
+        'http://localhost:8000/login/doctor/',
+        data,
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          }
+        }
+      )
+
+      console.log(result.data)
+      const token=result.data.access
+      const doctor_id=result.data.id
+
+      localStorage.setItem('token', token)
+      localStorage.setItem('doctor_id', doctor_id)
+
+      await fetchDoctorDetails(token, doctor_id)
+      router.push('/doctorDashboard/')
+      
+      // Redirect to doctor dashboard on successful login
+    } catch {
+      window.alert('Invalid credentials')
+    }
+  }
+
+  const handleSubmit = async e => {
     e.preventDefault()
-    // In a real app, you would handle authentication here
-    console.log('Doctor login with ID:', doctorId)
-    // Redirect to doctor dashboard on successful login
+    // console.log('Doctor login with ID:', email, password)
+    await LoginDoctor()
   }
 
   return (
@@ -74,9 +130,19 @@ export default function DoctorLoginPage() {
                   <input
                     type='text'
                     className='w-full rounded-full border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-500'
-                    placeholder='Enter Doctor ID'
-                    value={doctorId}
-                    onChange={e => setDoctorId(e.target.value)}
+                    placeholder='Enter Email'
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className='mb-4'>
+                  <input
+                    type='password'
+                    className='w-full rounded-full border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-500'
+                    placeholder='Password'
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
                     required
                   />
                 </div>
@@ -88,21 +154,6 @@ export default function DoctorLoginPage() {
                   Continue
                 </button>
               </form>
-
-              <div className='mt-4 flex justify-between text-sm'>
-                <Link
-                  href='/doctor/register'
-                  className='text-cyan-500 hover:underline'
-                >
-                  Register here
-                </Link>
-                <Link
-                  href='/doctor/forgot-id'
-                  className='text-gray-500 hover:underline'
-                >
-                  Forgot Doctor ID
-                </Link>
-              </div>
             </div>
           </div>
         </div>

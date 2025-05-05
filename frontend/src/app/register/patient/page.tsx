@@ -7,8 +7,8 @@ import Navbar from '@/components/Navbar'
 export default function PatientRegistrationPage() {
   const [formData, setFormData] = useState({
     name: '',
-    contactNumber: '',
-    aadhaarNumber: ''
+    aadhaar: '',
+    password: ''
   })
 
   const handleChange = e => {
@@ -85,21 +85,21 @@ export default function PatientRegistrationPage() {
                   />
 
                   <input
-                    type='tel'
-                    name='contactNumber'
+                    type='text'
+                    name='aadhaar'
                     className='w-full rounded-full border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-500'
-                    placeholder='Enter Contact Number'
-                    value={formData.contactNumber}
+                    placeholder='Enter Aadhaar Number'
+                    value={formData.aadhaar}
                     onChange={handleChange}
                     required
                   />
 
                   <input
-                    type='text'
-                    name='aadhaarNumber'
+                    type='password'
+                    name='password'
                     className='w-full rounded-full border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-500'
-                    placeholder='Enter Aadhaar Number'
-                    value={formData.aadhaarNumber}
+                    placeholder='Enter password'
+                    value={formData.password}
                     onChange={handleChange}
                     required
                   />
