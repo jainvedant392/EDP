@@ -5,8 +5,8 @@ import Image from 'next/image'
 import Link from 'next/link'
 
 export default function PatientLoginPage() {
-  const [aadhaar, setAadhaar] = useState('')  
-  const [password, setPassword] = useState('')  
+  const [aadhaar, setAadhaar] = useState('')
+  const [password, setPassword] = useState('')
 
   const router = useRouter()
 
@@ -18,11 +18,22 @@ export default function PatientLoginPage() {
   }
 
   return (
-    <div className='flex min-h-screen flex-col bg-gray-800'>
+    <div className='relative min-h-screen bg-gray-800'>
       {/* Main Content */}
-      <main className='flex flex-grow'>
-        {/* Left Side - Doctor Image */}
-        <div className='relative hidden w-1/2 bg-cover bg-center md:block'>
+      {/* Left Side - Doctor Image */}
+      <div className='absolute inset-0 z-0 block 2xl:hidden'>
+        <Image
+          src='/login_register_medbot.png'
+          alt='Medical Professional'
+          layout='fill'
+          objectFit='cover'
+          priority
+        />
+      </div>
+
+      {/* Right Side - Login Form */}
+      <main className='relative z-10 flex min-h-screen flex-col 2xl:flex-row'>
+        <div className='relative hidden w-1/2 bg-cover bg-center 2xl:block'>
           <Image
             src='/login_register_medbot.png'
             alt='Medical Professional'
@@ -32,8 +43,7 @@ export default function PatientLoginPage() {
           />
         </div>
 
-        {/* Right Side - Login Form */}
-        <div className='flex w-full items-center justify-center bg-gray-800 p-6 md:w-1/2'>
+        <div className='flex w-full min-h-screen items-center justify-center bg-gray-800 bg-opacity-80 p-6 2xl:w-1/2'>
           <div className='w-full max-w-md'>
             <div className='mb-6 flex justify-center'>
               <div className='flex items-center text-white'>
@@ -50,7 +60,10 @@ export default function PatientLoginPage() {
 
             <div className='rounded-lg bg-white p-6 shadow-lg'>
               <div className='mb-6 flex items-center'>
-                <button onClick={() => router.push('/')} className='text-gray-500'>
+                <button
+                  onClick={() => router.push('/')}
+                  className='text-gray-500'
+                >
                   <svg
                     xmlns='http://www.w3.org/2000/svg'
                     className='h-5 w-5'

@@ -2,7 +2,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import Link from 'next/link'
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('')
@@ -11,17 +10,26 @@ export default function AdminLoginPage() {
 
   const handleSubmit = e => {
     e.preventDefault()
-    // In a real app, you would handle authentication here
     console.log('Admin login with ID:', email, password)
-    // Redirect to admin dashboard on successful login
   }
 
   return (
-    <div className='flex min-h-screen flex-col bg-gray-800'>
-      {/* Main Content */}
-      <main className='flex flex-grow'>
-        {/* Left Side - Doctor Image */}
-        <div className='relative hidden w-1/2 bg-cover bg-center md:block'>
+    <div className='relative min-h-screen bg-gray-800'>
+      {/* Background image for screens < 2xl */}
+      <div className='absolute inset-0 z-0 block 2xl:hidden'>
+        <Image
+          src='/login_register_medbot.png'
+          alt='Medical Professional'
+          layout='fill'
+          objectFit='cover'
+          priority
+        />
+      </div>
+
+      {/* 2xl and above - split layout */}
+      <main className='relative z-10 flex min-h-screen flex-col 2xl:flex-row'>
+        {/* Left Side - shown only in ≥2xl */}
+        <div className='relative hidden w-1/2 bg-cover bg-center 2xl:block'>
           <Image
             src='/login_register_medbot.png'
             alt='Medical Professional'
@@ -31,8 +39,8 @@ export default function AdminLoginPage() {
           />
         </div>
 
-        {/* Right Side - Login Form */}
-        <div className='flex w-full items-center justify-center bg-gray-800 p-6 md:w-1/2'>
+        {/* Login Form */}
+        <div className='flex w-full min-h-screen items-center justify-center bg-gray-800 bg-opacity-80 p-6 2xl:w-1/2'>
           <div className='w-full max-w-md'>
             <div className='mb-6 flex justify-center'>
               <div className='flex items-center text-white'>

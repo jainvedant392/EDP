@@ -2,7 +2,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import Link from 'next/link'
 import axios from 'axios'
 
 export default function DoctorLoginPage() {
@@ -10,8 +9,7 @@ export default function DoctorLoginPage() {
   const [password, setPassword] = useState('')
   const router = useRouter()
 
-  async function fetchDoctorDetails(token, id){
-
+  async function fetchDoctorDetails(token, id) {
     const config = {
       method: 'get',
       maxBodyLength: Infinity,
@@ -33,6 +31,7 @@ export default function DoctorLoginPage() {
     
     makeRequest();
   }
+
   async function LoginDoctor() {
     const data = new URLSearchParams()
     data.append('email', email)
@@ -49,17 +48,14 @@ export default function DoctorLoginPage() {
         }
       )
 
-      console.log(result.data)
-      const token=result.data.access
-      const doctor_id=result.data.id
+      const token = result.data.access
+      const doctor_id = result.data.id
 
       localStorage.setItem('token', token)
       localStorage.setItem('doctor_id', doctor_id)
 
       await fetchDoctorDetails(token, doctor_id)
       router.push('/doctorDashboard/')
-      
-      // Redirect to doctor dashboard on successful login
     } catch {
       window.alert('Invalid credentials')
     }
@@ -67,16 +63,26 @@ export default function DoctorLoginPage() {
 
   const handleSubmit = async e => {
     e.preventDefault()
-    // console.log('Doctor login with ID:', email, password)
     await LoginDoctor()
   }
 
   return (
-    <div className='flex min-h-screen flex-col bg-gray-800'>
-      {/* Main Content */}
-      <main className='flex flex-grow'>
-        {/* Left Side - Doctor Image */}
-        <div className='relative hidden w-1/2 bg-cover bg-center md:block'>
+    <div className='relative min-h-screen bg-gray-800'>
+      {/* Background image for screens < 2xl */}
+      <div className='absolute inset-0 z-0 block 2xl:hidden'>
+        <Image
+          src='/login_register_medbot.png'
+          alt='Medical Professional'
+          layout='fill'
+          objectFit='cover'
+          priority
+        />
+      </div>
+
+      {/* 2xl and above - split layout */}
+      <main className='relative z-10 flex min-h-screen flex-col 2xl:flex-row'>
+        {/* Left Side - shown only in ≥2xl */}
+        <div className='relative hidden w-1/2 bg-cover bg-center 2xl:block'>
           <Image
             src='/login_register_medbot.png'
             alt='Medical Professional'
@@ -87,7 +93,7 @@ export default function DoctorLoginPage() {
         </div>
 
         {/* Right Side - Login Form */}
-        <div className='flex w-full items-center justify-center bg-gray-800 p-6 md:w-1/2'>
+        <div className='flex w-full min-h-screen items-center justify-center bg-gray-800 bg-opacity-80 p-6 2xl:w-1/2'>
           <div className='w-full max-w-md'>
             <div className='mb-6 flex justify-center'>
               <div className='flex items-center text-white'>
