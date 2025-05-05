@@ -152,6 +152,7 @@ export default function DoctorDiagnosisDetailsPage() {
             }
           }
         )
+        console.log(response.data)
         const data = formatDiagnosisData(response.data)
         setDiagnosisData(data)
         setEditedVitals({
@@ -668,14 +669,14 @@ export default function DoctorDiagnosisDetailsPage() {
                   </div>
                 </div>
 
-                <div className='mb-4'>
+                {/* <div className='mb-4'>
                   <div className='mb-2 font-semibold text-[#18B7CD]'>
                     Analysis:
                   </div>
                   <div className='whitespace-pre-line rounded border border-gray-200 bg-gray-50 p-3 text-sm'>
                     {entry.analysis || 'No analysis available'}
                   </div>
-                </div>
+                </div> */}
 
                 {entry.prescriptions && entry.prescriptions.length > 0 && (
                   <div className='mb-4'>

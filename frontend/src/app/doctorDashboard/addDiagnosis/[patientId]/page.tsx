@@ -9,6 +9,7 @@ import Navbar from '@/components/Navbar'
 export default function AddDiagnosisPage() {
   const params = useParams()
   const [patientId, setPatientId] = useState('')
+  const [doctor_id, setDoctorId] = useState('')
   const [patientData, setPatientData] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSuccess, setIsSuccess] = useState(false)
@@ -16,16 +17,16 @@ export default function AddDiagnosisPage() {
 
   // Form state
   const [formData, setFormData] = useState({
-    bloodPressure: '',
-    spo2: '',
-    heartRate: '',
-    temperature: '',
-    respiratoryRate: '',
-    diagnosis: '',
-    testsTaken: [],
+    patient_id: '',
+    visiting_doctor_id: '',
+    blood_pressure: '',
+    SPo2: '',
+    heart_rate: '',
+    blood_sugar: '',
+    diagnosis_summary: '',
+    tests: [],
     uploadedTests: [],
-    testAnalysis: '',
-    doctorsNotes: '',
+    additional_notes: '',
     prescriptions: [{ drug: '', dosage: '', duration: '', method: '' }]
   })
 
@@ -45,9 +46,30 @@ export default function AddDiagnosisPage() {
   ]
 
   useEffect(() => {
-    // In a real app, fetch patient data from API
+    // Get doctor ID from localStorage
+    const fetchDoctorId = () => {
+      try {
+        const storedDoctorId = localStorage.getItem('doctor_id')
+        if (storedDoctorId) {
+          setDoctorId(storedDoctorId)
+          setFormData(prev => ({
+            ...prev,
+            visiting_doctor_id: storedDoctorId
+          }))
+        }
+      } catch (error) {
+        console.error('Error accessing localStorage:', error)
+      }
+    }
+    
+    // Get patient ID from URL params
     if (params.patientId) {
       setPatientId(params.patientId)
+      setFormData(prev => ({
+        ...prev,
+        patient_id: params.patientId
+      }))
+      
       // Mock patient data - replace with API call
       const mockPatient = {
         id: params.patientId,
@@ -61,6 +83,8 @@ export default function AddDiagnosisPage() {
       setPatientData(mockPatient)
       setIsLoading(false)
     }
+    
+    fetchDoctorId()
   }, [params.patientId])
 
   const handleInputChange = e => {
@@ -72,21 +96,17 @@ export default function AddDiagnosisPage() {
   }
 
   const handleTestSelection = test => {
-    if (selectedTests.includes(test)) {
-      setSelectedTests(selectedTests.filter(t => t !== test))
-    } else {
-      setSelectedTests([...selectedTests, test])
-    }
-
-    // Update form data
+    const updatedTests = selectedTests.includes(test)
+      ? selectedTests.filter(t => t !== test)
+      : [...selectedTests, test]
+  
+    setSelectedTests(updatedTests)
     setFormData(prev => ({
       ...prev,
-      testsTaken: selectedTests.includes(test)
-        ? prev.testsTaken.filter(t => t !== test)
-        : [...prev.testsTaken, test]
+      tests: updatedTests
     }))
   }
-
+  
   const handleFileUpload = e => {
     const files = Array.from(e.target.files)
     const fileNames = files.map(file => file.name)
@@ -118,8 +138,26 @@ export default function AddDiagnosisPage() {
   }
 
   const handleSubmit = () => {
+    // Get current date and time in required formats
+    const now = new Date()
+    
+    // Format date as YYYY-MM-DD
+    const diagnosis_date = now.toISOString().split('T')[0]
+    
+    // Format time in 24-hour format (HH:MM:SS)
+    const diagnosis_time = now.toTimeString().split(' ')[0]
+    
     // In a real app, submit to API
-    console.log('Form submitted:', formData)
+    // Make sure patientId, doctorId, date and time are included in the submission
+    const dataToSubmit = {
+      ...formData,
+      patient_id: patientId,
+      visiting_doctor_id: doctor_id,
+      diagnosis_date,
+      diagnosis_time
+    }
+    
+    console.log('Form submitted:', dataToSubmit)
 
     // Show success state
     setIsSuccess(true)
@@ -191,30 +229,40 @@ export default function AddDiagnosisPage() {
                 <div>
                   <input
                     type='text'
-                    name='bloodPressure'
+                    name='blood_pressure'
                     className='w-full rounded border border-gray-300 p-2'
                     placeholder='Enter Blood Pressure'
-                    value={formData.bloodPressure}
+                    value={formData.blood_pressure}
                     onChange={handleInputChange}
                   />
                 </div>
                 <div>
                   <input
                     type='text'
-                    name='spo2'
+                    name='blood_sugar'
+                    className='w-full rounded border border-gray-300 p-2'
+                    placeholder='Enter Blood Sugar'
+                    value={formData.blood_sugar}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div>
+                  <input
+                    type='text'
+                    name='SPo2'
                     className='w-full rounded border border-gray-300 p-2'
                     placeholder='Enter SPO2'
-                    value={formData.spo2}
+                    value={formData.SPo2}
                     onChange={handleInputChange}
                   />
                 </div>
                 <div>
                   <input
                     type='text'
-                    name='heartRate'
+                    name='heart_rate'
                     className='w-full rounded border border-gray-300 p-2'
                     placeholder='Enter Heart Rate'
-                    value={formData.heartRate}
+                    value={formData.heart_rate}
                     onChange={handleInputChange}
                   />
                 </div>
@@ -225,10 +273,10 @@ export default function AddDiagnosisPage() {
             <div className='rounded-lg border border-[#18B7CD] p-4'>
               <input
                 type='text'
-                name='diagnosis'
+                name='diagnosis_summary'
                 className='w-full rounded border border-gray-300 p-2'
                 placeholder='Enter Patient Diagnosis'
-                value={formData.diagnosis}
+                value={formData.diagnosis_summary}
                 onChange={handleInputChange}
               />
             </div>
@@ -241,6 +289,7 @@ export default function AddDiagnosisPage() {
                     type='text'
                     className='w-full rounded border border-gray-300 p-2'
                     placeholder='Enter Tests taken'
+                    disabled
                   />
                 </div>
                 <div className='flex flex-wrap gap-2'>
@@ -282,28 +331,6 @@ export default function AddDiagnosisPage() {
                   ))}
                 </div>
               </div>
-            </div>
-
-            {/* Analysis */}
-            <div className='rounded-lg border border-[#18B7CD] p-4'>
-              <textarea
-                name='testAnalysis'
-                className='h-32 w-full rounded border border-gray-300 p-2'
-                placeholder='Enter Test Analysis'
-                value={formData.testAnalysis}
-                onChange={handleInputChange}
-              />
-            </div>
-
-            {/* Doctor's Notes */}
-            <div className='rounded-lg border border-[#18B7CD] p-4'>
-              <textarea
-                name='doctorsNotes'
-                className='h-32 w-full rounded border border-gray-300 p-2'
-                placeholder='Enter Doctor Notes'
-                value={formData.doctorsNotes}
-                onChange={handleInputChange}
-              />
             </div>
 
             {/* Continue Button */}
@@ -397,6 +424,15 @@ export default function AddDiagnosisPage() {
                 >
                   <span>Enter New Prescription</span>
                 </button>
+              </div>
+              <div className='rounded-lg border border-[#18B7CD] p-4'>
+                <textarea
+                  name='additional_notes'
+                  className='h-24 w-full rounded border border-gray-300 p-2'
+                  placeholder='Enter Additional Notes (if any)'
+                  value={formData.additional_notes}
+                  onChange={handleInputChange}
+                />
               </div>
             </div>
 

@@ -37,26 +37,29 @@ export default function DoctorDashboard() {
     if (storedDoctor) {
       const doctorData = JSON.parse(storedDoctor)
       setDoctor(doctorData)
-      
+
       // Fetch diagnoses for the doctor
       fetchDiagnoses(doctorData.id)
     }
   }, [])
 
-  const fetchDiagnoses = async (doctorId) => {
+  const fetchDiagnoses = async doctorId => {
     try {
       setLoading(true)
       setError(null) // Clear any previous errors
       const token = localStorage.getItem('token')
-      
-      const response = await axios.get(`http://localhost:8000/api/doctors/${doctorId}/diagnoses/`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
+
+      const response = await axios.get(
+        `http://localhost:8000/api/doctors/${doctorId}/diagnoses/`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
         }
-      })
-      
+      )
+
       const diagnosesData = response.data
-      
+
       // If diagnosesData is empty, set empty arrays but don't show an error
       if (!diagnosesData || diagnosesData.length === 0) {
         setDiagnoses([])
@@ -66,12 +69,13 @@ export default function DoctorDashboard() {
         setLoading(false)
         return
       }
-      
+
       // Format diagnoses data
       const formattedDiagnoses = diagnosesData.map(diagnosis => {
         // Extract patient name from the patient object if it exists, otherwise use ID
-        const patientName = diagnosis.patient_id?.name || `Patient ${diagnosis.patient_id}`
-        
+        const patientName =
+          diagnosis.patient_id?.name || `Patient ${diagnosis.patient_id}`
+
         // Format date and time
         const date = new Date(diagnosis.diagnosis_date)
         const formattedDate = date.toLocaleDateString('en-US', {
@@ -79,7 +83,7 @@ export default function DoctorDashboard() {
           day: 'numeric',
           year: 'numeric'
         })
-        
+
         // Format time
         let hours = parseInt(diagnosis.diagnosis_time.split(':')[0])
         const minutes = diagnosis.diagnosis_time.split(':')[1]
@@ -87,36 +91,48 @@ export default function DoctorDashboard() {
         hours = hours % 12
         hours = hours ? hours : 12 // Convert 0 to 12
         const formattedTime = `${hours}:${minutes} ${ampm}`
-        
+
         // Create a unique diagnosis summary for the filter
-        const diagnosisSummary = diagnosis.diagnosis_summary.length > 30
-          ? diagnosis.diagnosis_summary.substring(0, 30).split(' ')[0] // Get the first word or part
-          : diagnosis.diagnosis_summary
-        
+        const diagnosisSummary =
+          diagnosis.diagnosis_summary.length > 30
+            ? diagnosis.diagnosis_summary.substring(0, 30).split(' ')[0] // Get the first word or part
+            : diagnosis.diagnosis_summary
+
         return {
           date: formattedDate,
           time: formattedTime,
           patientName: patientName,
-          patientId: typeof diagnosis.patient_id === 'object' ? diagnosis.patient_id.id : diagnosis.patient_id,
+          patientId:
+            typeof diagnosis.patient_id === 'object'
+              ? diagnosis.patient_id.id
+              : diagnosis.patient_id,
           diagnosis: diagnosisSummary,
-          status: diagnosis.status.charAt(0).toUpperCase() + diagnosis.status.slice(1), // Capitalize the status
+          status:
+            diagnosis.status.charAt(0).toUpperCase() +
+            diagnosis.status.slice(1), // Capitalize the status
           recordId: diagnosis.id,
           rawDate: diagnosis.diagnosis_date, // Keep raw date for sorting
           fullDiagnosis: diagnosis.diagnosis_summary
         }
       })
-      
+
       setDiagnoses(formattedDiagnoses)
       setFilteredDiagnoses(formattedDiagnoses)
-      
+
       // Extract unique diagnosis types for filter
-      const uniqueDiagnoses = ['All', ...new Set(formattedDiagnoses.map(d => d.diagnosis))]
+      const uniqueDiagnoses = [
+        'All',
+        ...new Set(formattedDiagnoses.map(d => d.diagnosis))
+      ]
       setDiagnosisTypes(uniqueDiagnoses)
-      
+
       // Extract unique patient IDs for filter
-      const uniquePatientIds = ['All', ...new Set(formattedDiagnoses.map(d => d.patientId))]
+      const uniquePatientIds = [
+        'All',
+        ...new Set(formattedDiagnoses.map(d => d.patientId))
+      ]
       setPatientIds(uniquePatientIds)
-      
+
       setLoading(false)
     } catch (err) {
       console.error('Error fetching diagnoses:', err)
@@ -132,8 +148,18 @@ export default function DoctorDashboard() {
   // Date parsing function
   const parseDate = dateStr => {
     const monthMap = {
-      January: 0, February: 1, March: 2, April: 3, May: 4, June: 5,
-      July: 6, August: 7, September: 8, October: 9, November: 10, December: 11
+      January: 0,
+      February: 1,
+      March: 2,
+      April: 3,
+      May: 4,
+      June: 5,
+      July: 6,
+      August: 7,
+      September: 8,
+      October: 9,
+      November: 10,
+      December: 11
     }
 
     // Split the date string properly
@@ -148,11 +174,13 @@ export default function DoctorDashboard() {
   // Using useEffect to handle filtering and sorting when dependencies change
   useEffect(() => {
     if (diagnoses.length === 0) return
-    
+
     let filtered = [...diagnoses]
 
     if (selectedDiagnosis !== 'All') {
-      filtered = filtered.filter(record => record.diagnosis === selectedDiagnosis)
+      filtered = filtered.filter(
+        record => record.diagnosis === selectedDiagnosis
+      )
     }
 
     if (selectedStatus !== 'All') {
@@ -161,7 +189,9 @@ export default function DoctorDashboard() {
 
     // Filter by patient ID
     if (selectedPatientId !== 'All') {
-      filtered = filtered.filter(record => record.patientId.toString() === selectedPatientId.toString())
+      filtered = filtered.filter(
+        record => record.patientId.toString() === selectedPatientId.toString()
+      )
     }
 
     // Filter by date range
@@ -195,7 +225,14 @@ export default function DoctorDashboard() {
     })
 
     setFilteredDiagnoses(filtered)
-  }, [diagnoses, selectedDiagnosis, selectedStatus, selectedPatientId, sortOrder, dateRange])
+  }, [
+    diagnoses,
+    selectedDiagnosis,
+    selectedStatus,
+    selectedPatientId,
+    sortOrder,
+    dateRange
+  ])
 
   const handleDiagnosisChange = value => {
     setSelectedDiagnosis(value)
@@ -223,17 +260,21 @@ export default function DoctorDashboard() {
 
   // Stats calculation
   const totalPatients = new Set(diagnoses.map(record => record.patientId)).size
-  const ongoingCases = diagnoses.filter(record => record.status === 'Ongoing').length
-  const completedCases = diagnoses.filter(record => record.status === 'Completed').length
+  const ongoingCases = diagnoses.filter(
+    record => record.status === 'Ongoing'
+  ).length
+  const completedCases = diagnoses.filter(
+    record => record.status === 'Completed'
+  ).length
 
   if (loading) {
     return (
-      <div className="flex min-h-screen flex-col">
+      <div className='flex min-h-screen flex-col'>
         <Navbar />
-        <div className="flex flex-1 items-center justify-center">
-          <div className="text-center">
-            <div className="h-16 w-16 mx-auto mb-4 border-4 border-t-[#18B7CD] border-r-[#18B7CD] border-b-transparent border-l-transparent rounded-full animate-spin"></div>
-            <p className="text-lg text-gray-600">Loading diagnosis data...</p>
+        <div className='flex flex-1 items-center justify-center'>
+          <div className='text-center'>
+            <div className='mx-auto mb-4 h-16 w-16 animate-spin rounded-full border-4 border-b-transparent border-l-transparent border-r-[#18B7CD] border-t-[#18B7CD]'></div>
+            <p className='text-lg text-gray-600'>Loading diagnosis data...</p>
           </div>
         </div>
       </div>
@@ -242,14 +283,14 @@ export default function DoctorDashboard() {
 
   if (error) {
     return (
-      <div className="flex min-h-screen flex-col">
+      <div className='flex min-h-screen flex-col'>
         <Navbar />
-        <div className="flex flex-1 items-center justify-center">
-          <div className="text-center p-6 bg-red-50 rounded-lg">
-            <p className="text-lg text-red-600 mb-2">Error: {error}</p>
-            <button 
-              onClick={() => doctor && fetchDiagnoses(doctor.id)} 
-              className="px-4 py-2 bg-[#18B7CD] text-white rounded-md hover:bg-[#0da2b8]"
+        <div className='flex flex-1 items-center justify-center'>
+          <div className='rounded-lg bg-red-50 p-6 text-center'>
+            <p className='mb-2 text-lg text-red-600'>Error: {error}</p>
+            <button
+              onClick={() => doctor && fetchDiagnoses(doctor.id)}
+              className='rounded-md bg-[#18B7CD] px-4 py-2 text-white hover:bg-[#0da2b8]'
             >
               Try Again
             </button>
@@ -273,7 +314,7 @@ export default function DoctorDashboard() {
 
         <div className='relative h-32 w-32 overflow-hidden rounded-full border-4 border-[#18B7CD]'>
           <Image
-            src={doctor?.profile_picture || '/defaultDoctor.png'} 
+            src={doctor?.profile_picture || '/defaultDoctor.png'}
             alt={doctor?.name || 'Doctor'}
             width={128}
             height={128}
@@ -288,7 +329,8 @@ export default function DoctorDashboard() {
           </h1>
           <p className='text-[#18B7CD]'>
             {doctor?.medical_license_number || '---'} |{' '}
-            {doctor?.specializations?.join(', ') || '---'} | {doctor?.qualifications?.join(', ') || '---'}
+            {doctor?.specializations?.join(', ') || '---'} |{' '}
+            {doctor?.qualifications?.join(', ') || '---'}
           </p>
         </div>
 
@@ -314,7 +356,7 @@ export default function DoctorDashboard() {
       </section>
 
       {/* Filters Section */}
-      <section className='mb-4 flex gap-2 px-6 flex-wrap'>
+      <section className='mb-4 flex flex-wrap gap-2 px-6'>
         <button
           onClick={handleAllRecords}
           className='rounded-full bg-[#18B7CD] px-4 py-1 text-sm text-white'
@@ -429,9 +471,15 @@ export default function DoctorDashboard() {
 
         {/* New Patient ID Filter */}
         <div className='rounded-full border border-[#18B7CD] shadow-sm hover:border-[#0da2b8]'>
-          <Select value={selectedPatientId} onValueChange={handlePatientIdChange}>
+          <Select
+            value={selectedPatientId}
+            onValueChange={handlePatientIdChange}
+          >
             <SelectTrigger className='flex h-8 w-40 cursor-pointer items-center justify-between rounded-full border-none bg-white px-3 text-black'>
-              <SelectValue placeholder='Patient ID' className='text-sm font-medium'>
+              <SelectValue
+                placeholder='Patient ID'
+                className='text-sm font-medium'
+              >
                 {selectedPatientId === 'All' ? 'Patient ID' : selectedPatientId}
               </SelectValue>
             </SelectTrigger>
@@ -448,31 +496,40 @@ export default function DoctorDashboard() {
             </SelectContent>
           </Select>
         </div>
-
-        <button 
-          className='ml-auto flex items-center gap-1 rounded-full bg-[#18B7CD] px-4 py-1 text-sm text-white'
-          onClick={() => router.push('/doctorDashboard/schedule')} // Assuming you have a schedule route
-        >
-          <Calendar size={16} />
-          Schedule
-        </button>
       </section>
 
       {/* Table Section */}
-      <section className='flex-1 px-6 pb-6 relative'>
+      <section className='relative flex-1 px-6 pb-6'>
         <div className='h-96 rounded-lg shadow'>
           <div className='h-full overflow-x-auto overflow-y-auto rounded-lg'>
             {diagnoses.length === 0 ? (
-              <div className="flex h-full flex-col items-center justify-center bg-white rounded-lg">
-                <div className="text-center p-6">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              <div className='flex h-full flex-col items-center justify-center rounded-lg bg-white'>
+                <div className='p-6 text-center'>
+                  <svg
+                    xmlns='http://www.w3.org/2000/svg'
+                    className='mx-auto mb-4 h-16 w-16 text-gray-400'
+                    fill='none'
+                    viewBox='0 0 24 24'
+                    stroke='currentColor'
+                  >
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={1.5}
+                      d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'
+                    />
                   </svg>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Diagnosis Records</h3>
-                  <p className="text-gray-500 mb-4">You haven't created any diagnosis records yet.</p>
-                  <button 
-                    onClick={() => router.push('/doctorDashboard/new-diagnosis')} 
-                    className="inline-flex items-center px-4 py-2 bg-[#18B7CD] text-white rounded-md hover:bg-[#0da2b8]"
+                  <h3 className='mb-2 text-lg font-medium text-gray-900'>
+                    No Diagnosis Records
+                  </h3>
+                  <p className='mb-4 text-gray-500'>
+                    You haven't created any diagnosis records yet.
+                  </p>
+                  <button
+                    onClick={() =>
+                      router.push('/doctorDashboard/new-diagnosis')
+                    }
+                    className='inline-flex items-center rounded-md bg-[#18B7CD] px-4 py-2 text-white hover:bg-[#0da2b8]'
                   >
                     + Create New Diagnosis
                   </button>
@@ -511,8 +568,8 @@ export default function DoctorDashboard() {
                             record.status === 'Ongoing'
                               ? 'bg-amber-100 text-amber-800'
                               : record.status === 'Completed'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-red-100 text-red-800'
                           }`}
                         >
                           {record.status}
@@ -524,31 +581,46 @@ export default function DoctorDashboard() {
                 </tbody>
               </table>
             ) : (
-              <div className="flex h-full items-center justify-center bg-white text-gray-500 rounded-lg">
+              <div className='flex h-full items-center justify-center rounded-lg bg-white text-gray-500'>
                 <p>No diagnosis records found with the selected filters.</p>
               </div>
             )}
           </div>
         </div>
-        
+
         {/* Add Diagnosis button positioned in the bottom left corner */}
-        <div className="absolute bottom-32 right-8">
+        <div className='absolute bottom-32 right-8'>
           <button
             onClick={() => {
               if (selectedPatientId !== 'All') {
-                router.push(`/doctorDashboard/new-diagnosis?patientId=${selectedPatientId}`)
+                router.push(
+                  `/doctorDashboard/addDiagnosis/${selectedPatientId}/`
+                )
               }
             }}
             disabled={selectedPatientId === 'All'}
-            className={`flex items-center gap-1 px-4 py-2 rounded-md shadow-lg text-white ${
-              selectedPatientId !== 'All' 
-                ? 'bg-green-500 hover:bg-green-600 cursor-pointer' 
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            className={`flex items-center gap-1 rounded-md px-4 py-2 text-white shadow-lg ${
+              selectedPatientId !== 'All'
+                ? 'cursor-pointer bg-green-500 hover:bg-green-600'
+                : 'cursor-not-allowed bg-gray-300 text-gray-500'
             }`}
-            title={selectedPatientId === 'All' ? 'Select a patient first' : 'Add diagnosis for this patient'}
+            title={
+              selectedPatientId === 'All'
+                ? 'Select a patient first'
+                : 'Add diagnosis for this patient'
+            }
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+            <svg
+              xmlns='http://www.w3.org/2000/svg'
+              className='h-5 w-5'
+              viewBox='0 0 20 20'
+              fill='currentColor'
+            >
+              <path
+                fillRule='evenodd'
+                d='M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z'
+                clipRule='evenodd'
+              />
             </svg>
             Add Diagnosis
           </button>
