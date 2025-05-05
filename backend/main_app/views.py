@@ -646,58 +646,11 @@ def get_all_allotments(request):
 
 @api_view(['POST'])
 def create_full_diagnosis(request):
-    """
-    POST: Create a diagnosis and optionally a prescription with details and tests
-    """
     serializer = DiagnosisFullCreateSerializer(data=request.data)
-    
-    if not serializer.is_valid():
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-    try:
-        with transaction.atomic():
-            validated_data = serializer.validated_data
-            prescription_data = validated_data.pop('prescription', None)
-
-            # Create Diagnosis
-            diagnosis = Diagnosis.objects.create(**validated_data)
-
-            if prescription_data:
-                # Attach required foreign keys from diagnosis
-                prescription_data['diagnosis_id'] = diagnosis
-                prescription_data['patient_id'] = diagnosis.patient_id
-                prescription_data['prescribed_by_doctor_id'] = diagnosis.visiting_doctor_id
-
-                # Pop nested lists
-                prescription_details = prescription_data.pop('prescription_details', [])
-                tests_prescribed = prescription_data.pop('tests_prescribed', [])
-
-                # Create Prescription
-                prescription = Prescription.objects.create(**prescription_data)
-
-                # Create PrescriptionDetails (medicines)
-                for detail in prescription_details:
-                    PrescriptionDetails.objects.create(
-                        prescription_id=prescription,
-                        diagnosis_id=diagnosis,
-                        patient_id=diagnosis.patient_id,
-                        prescribed_by_doctor_id=diagnosis.visiting_doctor_id,
-                        **detail
-                    )
-
-                # Create TestPrescribed (tests)
-                for test in tests_prescribed:
-                    TestPrescribed.objects.create(
-                        prescription_id=prescription,
-                        patient_id=diagnosis.patient_id,
-                        ordering_doctor_id=diagnosis.visiting_doctor_id,
-                        **test
-                    )
-
-        return Response({"message": "Diagnosis and optional prescription created successfully."}, status=status.HTTP_201_CREATED)
-
-    except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    if serializer.is_valid():
+        diagnosis = serializer.save()
+        return Response({"status": "success", "message": "Diagnosis created successfully", "diagnosis_id": diagnosis.id}, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET'])
