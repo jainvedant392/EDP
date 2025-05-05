@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { ChevronLeft, Upload, Check } from 'lucide-react'
 import Navbar from '@/components/Navbar'
+import axios from 'axios'
 
 export default function AddDiagnosisPage() {
   const params = useParams()
@@ -14,6 +15,7 @@ export default function AddDiagnosisPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSuccess, setIsSuccess] = useState(false)
   const [formStep, setFormStep] = useState(1)
+  const [token, setToken] = useState('') // Added token state
 
   // Form state
   const [formData, setFormData] = useState({
@@ -46,6 +48,18 @@ export default function AddDiagnosisPage() {
   ]
 
   useEffect(() => {
+    // Get token from localStorage
+    try {
+      const storedToken = localStorage.getItem('token')
+      if (storedToken) {
+        setToken(storedToken)
+      }
+    } catch (error) {
+      console.error('Error accessing localStorage for token:', error)
+    }
+  }, [])
+
+  useEffect(() => {
     // Get doctor ID from localStorage
     const fetchDoctorId = () => {
       try {
@@ -61,7 +75,7 @@ export default function AddDiagnosisPage() {
         console.error('Error accessing localStorage:', error)
       }
     }
-    
+
     // Get patient ID from URL params
     if (params.patientId) {
       setPatientId(params.patientId)
@@ -69,7 +83,7 @@ export default function AddDiagnosisPage() {
         ...prev,
         patient_id: params.patientId
       }))
-      
+
       // Mock patient data - replace with API call
       const mockPatient = {
         id: params.patientId,
@@ -83,7 +97,7 @@ export default function AddDiagnosisPage() {
       setPatientData(mockPatient)
       setIsLoading(false)
     }
-    
+
     fetchDoctorId()
   }, [params.patientId])
 
@@ -99,14 +113,14 @@ export default function AddDiagnosisPage() {
     const updatedTests = selectedTests.includes(test)
       ? selectedTests.filter(t => t !== test)
       : [...selectedTests, test]
-  
+
     setSelectedTests(updatedTests)
     setFormData(prev => ({
       ...prev,
       tests: updatedTests
     }))
   }
-  
+
   const handleFileUpload = e => {
     const files = Array.from(e.target.files)
     const fileNames = files.map(file => file.name)
@@ -140,27 +154,54 @@ export default function AddDiagnosisPage() {
   const handleSubmit = () => {
     // Get current date and time in required formats
     const now = new Date()
-    
+
     // Format date as YYYY-MM-DD
     const diagnosis_date = now.toISOString().split('T')[0]
-    
+
     // Format time in 24-hour format (HH:MM:SS)
     const diagnosis_time = now.toTimeString().split(' ')[0]
-    
-    // In a real app, submit to API
-    // Make sure patientId, doctorId, date and time are included in the submission
-    const dataToSubmit = {
+
+    const dataToSubmit = JSON.stringify({
       ...formData,
       patient_id: patientId,
       visiting_doctor_id: doctor_id,
       diagnosis_date,
       diagnosis_time
-    }
-    
+    })
+
     console.log('Form submitted:', dataToSubmit)
 
-    // Show success state
-    setIsSuccess(true)
+    // Check if token exists before making the API call
+    if (!token) {
+      console.error('Authentication token not found')
+      // Handle missing token - maybe redirect to login
+      return
+    }
+
+    let config = {
+      method: 'post',
+      maxBodyLength: Infinity,
+      url: 'http://localhost:8000/api/create-full-diagnosis/',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      data: dataToSubmit
+    }
+
+    async function makeRequest() {
+      try {
+        const response = await axios.request(config)
+        console.log(JSON.stringify(response.data))
+        // Show success state
+        setIsSuccess(true)
+      } catch (error) {
+        console.error('Error submitting diagnosis:', error)
+        // Handle error - maybe show error message to user
+      }
+    }
+
+    makeRequest()
   }
 
   const handleContinue = () => {
