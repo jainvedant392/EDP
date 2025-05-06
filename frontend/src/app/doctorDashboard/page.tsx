@@ -111,7 +111,10 @@ export default function DoctorDashboard() {
             diagnosis.status.charAt(0).toUpperCase() +
             diagnosis.status.slice(1), // Capitalize the status
           recordId: diagnosis.id,
-          rawDate: diagnosis.diagnosis_date, // Keep raw date for sorting
+          rawDate: new Date(diagnosis.diagnosis_date).getTime(), // Store as timestamp for accurate sorting
+          rawDateTime: new Date(
+            `${diagnosis.diagnosis_date}T${diagnosis.diagnosis_time}`
+          ).getTime(), // Combine date and time for more precise sorting
           fullDiagnosis: diagnosis.diagnosis_summary
         }
       })
@@ -145,32 +148,6 @@ export default function DoctorDashboard() {
     router.push(`/doctorDashboard/diagnosis/${recordId}`)
   }
 
-  // Date parsing function
-  const parseDate = dateStr => {
-    const monthMap = {
-      January: 0,
-      February: 1,
-      March: 2,
-      April: 3,
-      May: 4,
-      June: 5,
-      July: 6,
-      August: 7,
-      September: 8,
-      October: 9,
-      November: 10,
-      December: 11
-    }
-
-    // Split the date string properly
-    const parts = dateStr.split(' ')
-    const month = parts[0]
-    const day = parseInt(parts[1].replace(',', ''))
-    const year = parseInt(parts[2])
-
-    return new Date(year, monthMap[month], day)
-  }
-
   // Using useEffect to handle filtering and sorting when dependencies change
   useEffect(() => {
     if (diagnoses.length === 0) return
@@ -199,28 +176,23 @@ export default function DoctorDashboard() {
       const today = new Date()
       const firstDay = new Date(today.getFullYear(), today.getMonth(), 1)
       filtered = filtered.filter(record => {
-        // Use rawDate for more accurate filtering
-        const recordDate = new Date(record.rawDate)
-        return recordDate >= firstDay
+        return record.rawDate >= firstDay.getTime()
       })
     } else if (dateRange === 'This Week') {
       const today = new Date()
       const firstDay = new Date(today.setDate(today.getDate() - today.getDay()))
       filtered = filtered.filter(record => {
-        const recordDate = new Date(record.rawDate)
-        return recordDate >= firstDay
+        return record.rawDate >= firstDay.getTime()
       })
     }
 
-    // Sort the records by date
+    // Sort the records by date and time
     filtered.sort((a, b) => {
-      const dateA = new Date(a.rawDate)
-      const dateB = new Date(b.rawDate)
-
+      // Use rawDateTime for more precise sorting (includes both date and time)
       if (sortOrder === 'Latest') {
-        return dateB - dateA // Descending (newest first)
+        return b.rawDateTime - a.rawDateTime // Descending (newest first)
       } else {
-        return dateA - dateB // Ascending (oldest first)
+        return a.rawDateTime - b.rawDateTime // Ascending (oldest first)
       }
     })
 

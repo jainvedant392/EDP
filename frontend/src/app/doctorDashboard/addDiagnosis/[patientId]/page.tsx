@@ -137,7 +137,7 @@ export default function AddDiagnosisPage() {
         blood_sugar: analysisData.blood_sugar || prev.blood_sugar,
         diagnosis_summary:
           analysisData.diagnosis_summary || prev.diagnosis_summary,
-        additional_notes: analysisData.additional_notes || prev.additional_notes
+        additional_notes: analysisData.additional_notes || prev.additional_notes || "No additional notes provided.",
       }
 
       // Handle tests (merge with any existing selected tests)
@@ -209,6 +209,7 @@ export default function AddDiagnosisPage() {
 
     const dataToSubmit = JSON.stringify({
       ...formData,
+      additional_notes: formData.additional_notes || "No additional notes provided.",
       patient_id: patientId,
       visiting_doctor_id: doctor_id,
       diagnosis_date,

@@ -18,7 +18,7 @@ import axios from 'axios'
 const patientData = {
   name: 'Vedant Jain',
   id: '1',
-  profileImage: '' // You'll need to add this image to your public folder
+  profileImage: '/defaultDoctor.png' // You'll need to add this image to your public folder
 }
 
 // Constants for departments and doctors (can be moved to API later)
@@ -125,7 +125,7 @@ export default function PatientDashboard() {
 
         <div className='relative h-32 w-32 overflow-hidden rounded-full border-4 border-[#18B7CD]'>
           <Image
-            src=''
+            src={patientData.profileImage}
             alt={patientData.name}
             width={128}
             height={128}
