@@ -1,8 +1,5 @@
 'use client'
 
-// APIS REQUIRED IN THIS PAGE
-// path('patients/<int:patient_id>/diagnoses/', get_diagnoses_for_patient, name='get_diagnoses_for_patient')
-
 import Image from 'next/image'
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -15,89 +12,16 @@ import {
   SelectItem
 } from '@radix-ui/react-select'
 import Navbar from '@/components/Navbar'
+import axios from 'axios'
 
-// Mock data
+// Mock patient data - This would also come from API eventually
 const patientData = {
-  name: 'Suresh Ramakrishnan',
-  id: '0201006',
+  name: 'Vedant Jain',
+  id: '1',
   profileImage: '' // You'll need to add this image to your public folder
 }
 
-const medicalRecords = [
-  {
-    date: 'April 28, 2025',
-    time: '05:36 pm',
-    department: 'ENT',
-    doctor: 'Dr. Arjun Sharma',
-    diagnosis: 'Asthma',
-    recordId: 'PRC-2025-0165'
-  },
-  {
-    date: 'March 24, 2025',
-    time: '07:40 am',
-    department: 'Psychiatry',
-    doctor: 'Dr. Neha Reddy',
-    diagnosis: 'Anxiety disorders',
-    recordId: 'PRC-2025-0146'
-  },
-  {
-    date: 'March 6, 2025',
-    time: '06:42 am',
-    department: 'Psychiatry',
-    doctor: 'Dr. Rahul Mehra',
-    diagnosis: 'Bipolar disorder',
-    recordId: 'PRC-2025-0123'
-  },
-  {
-    date: 'February 28, 2025',
-    time: '01:55 pm',
-    department: 'Psychiatry',
-    doctor: 'Dr. Rahul Mehra',
-    diagnosis: 'Bipolar disorder',
-    recordId: 'PRC-2025-0065'
-  },
-  {
-    date: 'January 2, 2025',
-    time: '04:15 am',
-    department: 'Psychiatry',
-    doctor: 'Dr. Neha Reddy',
-    diagnosis: 'ADHD',
-    recordId: 'PRC-2025-0034'
-  },
-  {
-    date: 'December 11, 2024',
-    time: '10:32 pm',
-    department: 'Physician',
-    doctor: 'Dr. Aarti Singh',
-    diagnosis: 'Viral Fever',
-    recordId: 'PRC-2024-6573'
-  },
-  {
-    date: 'October 19, 2024',
-    time: '11:31 pm',
-    department: 'ENT',
-    doctor: 'Dr. Arjun Sharma',
-    diagnosis: 'Throat Infection',
-    recordId: 'PRC-2024-6532'
-  },
-  {
-    date: 'October 7, 2024',
-    time: '10:12 am',
-    department: 'ENT',
-    doctor: 'Dr. Arjun Sharma',
-    diagnosis: 'Throat Infection',
-    recordId: 'PRC-2024-6342'
-  },
-  {
-    date: 'September 11, 2024',
-    time: '07:11 pm',
-    department: 'Physician',
-    doctor: 'Dr. Aarti Singh',
-    diagnosis: 'Viral Fever',
-    recordId: 'PRC-2024-6253'
-  }
-]
-
+// Constants for departments and doctors (can be moved to API later)
 const departments = ['All', 'ENT', 'Psychiatry', 'Physician']
 const doctors = [
   'All',
@@ -109,70 +33,72 @@ const doctors = [
 
 export default function PatientDashboard() {
   const router = useRouter()
-  const [filteredRecords, setFilteredRecords] = useState(medicalRecords)
+  const [diagnosisRecords, setDiagnosisRecords] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [sortOrder, setSortOrder] = useState('Latest')
   const [selectedDoctor, setSelectedDoctor] = useState('All')
   const [selectedDepartment, setSelectedDepartment] = useState('All')
 
-  const handleRowClick = (recordId) => {
-    router.push(`/patientDashboard/diagnosis/${recordId}`)
-  }
+  const patientId = patientData.id // In a real app, get this from route params or context
 
-  // Fixed date parsing function
-  const parseDate = (dateStr) => {
-    const monthMap = {
-      January: 0,
-      February: 1,
-      March: 2,
-      April: 3,
-      May: 4,
-      June: 5,
-      July: 6,
-      August: 7,
-      September: 8,
-      October: 9,
-      November: 10,
-      December: 11
-    }
-
-    // Split the date string properly
-    const parts = dateStr.split(' ')
-    const month = parts[0]
-    const day = parseInt(parts[1].replace(',', ''))
-    const year = parseInt(parts[2])
-
-    return new Date(year, monthMap[month], day)
-  }
-
-  // Using useEffect to handle filtering and sorting when dependencies change
+  // Fetch diagnosis data from API
   useEffect(() => {
-    let filtered = [...medicalRecords]
-
-    if (selectedDoctor !== 'All') {
-      filtered = filtered.filter(record => record.doctor === selectedDoctor)
-    }
-
-    if (selectedDepartment !== 'All') {
-      filtered = filtered.filter(
-        record => record.department === selectedDepartment
-      )
-    }
-
-    // Sort the records by date
-    filtered.sort((a, b) => {
-      const dateA = parseDate(a.date)
-      const dateB = parseDate(b.date)
-
-      if (sortOrder === 'Latest') {
-        return dateB.getTime() - dateA.getTime() // Descending (newest first)
-      } else {
-        return dateA.getTime() - dateB.getTime() // Ascending (oldest first)
+    const fetchDiagnosisData = async () => {
+      try {
+        setLoading(true)
+        // Get auth token from local storage or context
+        const token = localStorage.getItem('token') // Adjust based on how you store tokens
+        
+        const response = await axios.get(
+          `http://localhost:8000/api/patients/1/diagnoses/`, 
+          {
+            headers: {
+              Authorization: `Bearer ${token}` // Adjust based on your auth method
+            }
+          }
+        )
+        
+        setDiagnosisRecords(response.data)
+        setError(null)
+      } catch (err) {
+        console.error('Error fetching diagnosis data:', err)
+        setError('Failed to load diagnosis records')
+      } finally {
+        setLoading(false)
       }
-    })
+    }
 
-    setFilteredRecords(filtered)
-  }, [selectedDoctor, selectedDepartment, sortOrder])
+    fetchDiagnosisData()
+  }, [patientId])
 
+  const handleRowClick = (diagnosisId) => {
+    router.push(`/patientDashboard/diagnosis/${diagnosisId}`)
+  }
+
+  // Format the date from API format to display format
+  const formatDate = (dateString) => {
+    const date = new Date(dateString)
+    const options = { year: 'numeric', month: 'long', day: 'numeric' }
+    return date.toLocaleDateString('en-US', options)
+  }
+
+  // Format the time from API format to display format
+  const formatTime = (timeString) => {
+    // API returns time in format like "14:30:00"
+    const [hours, minutes] = timeString.split(':')
+    const time = new Date()
+    time.setHours(parseInt(hours, 10))
+    time.setMinutes(parseInt(minutes, 10))
+    
+    return time.toLocaleTimeString('en-US', { 
+      hour: 'numeric', 
+      minute: '2-digit',
+      hour12: true 
+    }).toLowerCase()
+  }
+
+  // We'll leave filter logic for future implementation
   const handleDoctorChange = value => {
     setSelectedDoctor(value)
   }
@@ -190,8 +116,6 @@ export default function PatientDashboard() {
   return (
     <div className='flex min-h-screen flex-col'>
       <Navbar />
-
-      {/* Main Content */}
 
       {/* Patient Info Section */}
       <section className='flex items-center p-6'>
@@ -216,7 +140,7 @@ export default function PatientDashboard() {
         </div>
       </section>
 
-      {/* Filters Section */}
+      {/* Filters Section - Keeping as is for now */}
       <section className='mb-4 flex gap-2 px-6'>
         <button
           onClick={handleAllRecords}
@@ -305,36 +229,64 @@ export default function PatientDashboard() {
       {/* Table Section */}
       <section className='flex-1 px-6 pb-6'>
         <div className='h-96 rounded-lg shadow'>
-          <div className='h-full overflow-x-auto overflow-y-auto rounded-lg'>
-            <table className='w-full'>
-              <thead className='sticky top-0 z-10 bg-[#18B7CD] text-white'>
-                <tr>
-                  <th className='p-3 text-left'>Date</th>
-                  <th className='p-3 text-left'>Time</th>
-                  <th className='p-3 text-left'>Department</th>
-                  <th className='p-3 text-left'>Doctor</th>
-                  <th className='p-3 text-left'>Diagnosis</th>
-                  <th className='p-3 text-left'>Record ID</th>
-                </tr>
-              </thead>
-              <tbody className='bg-white'>
-                {filteredRecords.map(record => (
-                  <tr
-                    key={record.recordId}
-                    className='cursor-pointer border-b hover:bg-gray-50'
-                    onClick={() => handleRowClick(record.recordId)}
-                  >
-                    <td className='p-3'>{record.date}</td>
-                    <td className='p-3'>{record.time}</td>
-                    <td className='p-3'>{record.department}</td>
-                    <td className='p-3'>{record.doctor}</td>
-                    <td className='p-3'>{record.diagnosis}</td>
-                    <td className='p-3'>{record.recordId}</td>
+          {loading ? (
+            <div className="flex h-full items-center justify-center">
+              <p>Loading diagnosis records...</p>
+            </div>
+          ) : error ? (
+            <div className="flex h-full items-center justify-center">
+              <p className="text-red-500">{error}</p>
+            </div>
+          ) : (
+            <div className='h-full overflow-x-auto overflow-y-auto rounded-lg'>
+              <table className='w-full'>
+                <thead className='sticky top-0 z-10 bg-[#18B7CD] text-white'>
+                  <tr>
+                    <th className='p-3 text-left'>Date</th>
+                    <th className='p-3 text-left'>Time</th>
+                    <th className='p-3 text-left'>Status</th>
+                    <th className='p-3 text-left'>Diagnosis</th>
+                    <th className='p-3 text-left'>Diagnosis ID</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className='bg-white'>
+                  {diagnosisRecords.length === 0 ? (
+                    <tr>
+                      <td colSpan="5" className="p-4 text-center text-gray-500">
+                        No diagnosis records found
+                      </td>
+                    </tr>
+                  ) : (
+                    diagnosisRecords.map(record => (
+                      <tr
+                        key={record.id}
+                        className='cursor-pointer border-b hover:bg-gray-50'
+                        onClick={() => handleRowClick(record.id)}
+                      >
+                        <td className='p-3'>{formatDate(record.diagnosis_date)}</td>
+                        <td className='p-3'>{formatTime(record.diagnosis_time)}</td>
+                        <td className='p-3'>
+                          <span className={`px-2 py-1 rounded text-xs font-medium
+                            ${record.status === 'ongoing' ? 'bg-yellow-100 text-yellow-800' : ''}
+                            ${record.status === 'completed' ? 'bg-green-100 text-green-800' : ''}
+                            ${record.status === 'cancelled' ? 'bg-red-100 text-red-800' : ''}
+                          `}>
+                            {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
+                          </span>
+                        </td>
+                        <td className='p-3'>
+                          {record.diagnosis_summary.length > 50 
+                            ? `${record.diagnosis_summary.substring(0, 50)}...` 
+                            : record.diagnosis_summary}
+                        </td>
+                        <td className='p-3'>#{record.id}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </section>
     </div>
