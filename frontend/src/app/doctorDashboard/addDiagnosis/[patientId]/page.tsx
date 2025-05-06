@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { ChevronLeft, Upload, Check } from 'lucide-react'
 import Navbar from '@/components/Navbar'
+import AudioRecorder from '@/components/AudioRecorder' // Import the AudioRecorder component
 import axios from 'axios'
 
 export default function AddDiagnosisPage() {
@@ -119,6 +120,51 @@ export default function AddDiagnosisPage() {
       ...prev,
       tests: updatedTests
     }))
+  }
+
+  // Handler for when Gemini analysis is complete
+  const handleAnalysisComplete = analysisData => {
+    console.log('Analysis data received:', analysisData)
+
+    // Update form data with the analysis results
+    setFormData(prev => {
+      // Create a new object with the merged data
+      const newData = {
+        ...prev,
+        blood_pressure: analysisData.blood_pressure || prev.blood_pressure,
+        SPo2: analysisData.SPo2 || prev.SPo2,
+        heart_rate: analysisData.heart_rate || prev.heart_rate,
+        blood_sugar: analysisData.blood_sugar || prev.blood_sugar,
+        diagnosis_summary:
+          analysisData.diagnosis_summary || prev.diagnosis_summary,
+        additional_notes: analysisData.additional_notes || prev.additional_notes
+      }
+
+      // Handle tests (merge with any existing selected tests)
+      if (analysisData.tests && analysisData.tests.length > 0) {
+        // Match test names while ignoring case
+        const normalizedTests = analysisData.tests.map(test => {
+          // Find the matching test in availableTests (case insensitive)
+          const matchingTest = availableTests.find(
+            availableTest => availableTest.toLowerCase() === test.toLowerCase()
+          )
+          return matchingTest || test // Return the properly cased version or original if no match
+        })
+
+        // Update the selected tests state for the UI pills
+        const newTests = [...new Set([...selectedTests, ...normalizedTests])]
+        setSelectedTests(newTests)
+        newData.tests = newTests
+      }
+
+      // Handle prescriptions - if there are any from analysis, use them
+      // Otherwise keep the current ones
+      if (analysisData.prescriptions && analysisData.prescriptions.length > 0) {
+        newData.prescriptions = analysisData.prescriptions
+      }
+
+      return newData
+    })
   }
 
   const handleFileUpload = e => {
@@ -259,7 +305,17 @@ export default function AddDiagnosisPage() {
           </Link>
         </div>
 
-        {/* Patient basic info would appear here in a real app */}
+        {/* Patient info card would go here */}
+
+        {/* Voice Recording Feature */}
+        <div className='mb-4 rounded-lg bg-[#E4F9FC] p-4'>
+          <h3 className='mb-2 font-medium'>Record Patient Diagnosis</h3>
+          <p className='mb-2 text-sm text-gray-600'>
+            Click to record your diagnosis and it will automatically fill the
+            form
+          </p>
+          <AudioRecorder onAnalysisComplete={handleAnalysisComplete} />
+        </div>
 
         {/* Form Step 1 */}
         {formStep === 1 && (
