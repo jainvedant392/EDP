@@ -49,16 +49,16 @@ export default function PatientDashboard() {
         setLoading(true)
         // Get auth token from local storage or context
         const token = localStorage.getItem('token') // Adjust based on how you store tokens
-        
+
         const response = await axios.get(
-          `http://localhost:8000/api/patients/1/diagnoses/`, 
+          `http://localhost:8000/api/patients/1/diagnoses/`,
           {
             headers: {
               Authorization: `Bearer ${token}` // Adjust based on your auth method
             }
           }
         )
-        
+
         setDiagnosisRecords(response.data)
         setError(null)
       } catch (err) {
@@ -72,30 +72,32 @@ export default function PatientDashboard() {
     fetchDiagnosisData()
   }, [patientId])
 
-  const handleRowClick = (diagnosisId) => {
+  const handleRowClick = diagnosisId => {
     router.push(`/patientDashboard/diagnosis/${diagnosisId}`)
   }
 
   // Format the date from API format to display format
-  const formatDate = (dateString) => {
+  const formatDate = dateString => {
     const date = new Date(dateString)
     const options = { year: 'numeric', month: 'long', day: 'numeric' }
     return date.toLocaleDateString('en-US', options)
   }
 
   // Format the time from API format to display format
-  const formatTime = (timeString) => {
+  const formatTime = timeString => {
     // API returns time in format like "14:30:00"
     const [hours, minutes] = timeString.split(':')
     const time = new Date()
     time.setHours(parseInt(hours, 10))
     time.setMinutes(parseInt(minutes, 10))
-    
-    return time.toLocaleTimeString('en-US', { 
-      hour: 'numeric', 
-      minute: '2-digit',
-      hour12: true 
-    }).toLowerCase()
+
+    return time
+      .toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      })
+      .toLowerCase()
   }
 
   // We'll leave filter logic for future implementation
@@ -230,12 +232,12 @@ export default function PatientDashboard() {
       <section className='flex-1 px-6 pb-6'>
         <div className='h-96 rounded-lg shadow'>
           {loading ? (
-            <div className="flex h-full items-center justify-center">
+            <div className='flex h-full items-center justify-center'>
               <p>Loading diagnosis records...</p>
             </div>
           ) : error ? (
-            <div className="flex h-full items-center justify-center">
-              <p className="text-red-500">{error}</p>
+            <div className='flex h-full items-center justify-center'>
+              <p className='text-red-500'>{error}</p>
             </div>
           ) : (
             <div className='h-full overflow-x-auto overflow-y-auto rounded-lg'>
@@ -244,15 +246,16 @@ export default function PatientDashboard() {
                   <tr>
                     <th className='p-3 text-left'>Date</th>
                     <th className='p-3 text-left'>Time</th>
-                    <th className='p-3 text-left'>Status</th>
+                    <th className='p-3 text-left'>Doctor ID</th>
                     <th className='p-3 text-left'>Diagnosis</th>
+                    <th className='p-3 text-left'>Status</th>
                     <th className='p-3 text-left'>Diagnosis ID</th>
                   </tr>
                 </thead>
                 <tbody className='bg-white'>
                   {diagnosisRecords.length === 0 ? (
                     <tr>
-                      <td colSpan="5" className="p-4 text-center text-gray-500">
+                      <td colSpan='5' className='p-4 text-center text-gray-500'>
                         No diagnosis records found
                       </td>
                     </tr>
@@ -263,21 +266,25 @@ export default function PatientDashboard() {
                         className='cursor-pointer border-b hover:bg-gray-50'
                         onClick={() => handleRowClick(record.id)}
                       >
-                        <td className='p-3'>{formatDate(record.diagnosis_date)}</td>
-                        <td className='p-3'>{formatTime(record.diagnosis_time)}</td>
                         <td className='p-3'>
-                          <span className={`px-2 py-1 rounded text-xs font-medium
-                            ${record.status === 'ongoing' ? 'bg-yellow-100 text-yellow-800' : ''}
-                            ${record.status === 'completed' ? 'bg-green-100 text-green-800' : ''}
-                            ${record.status === 'cancelled' ? 'bg-red-100 text-red-800' : ''}
-                          `}>
-                            {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
-                          </span>
+                          {formatDate(record.diagnosis_date)}
                         </td>
                         <td className='p-3'>
-                          {record.diagnosis_summary.length > 50 
-                            ? `${record.diagnosis_summary.substring(0, 50)}...` 
+                          {formatTime(record.diagnosis_time)}
+                        </td>
+                        <td className='p-3'>{record.visiting_doctor_id}</td>
+                        <td className='p-3'>
+                          {record.diagnosis_summary.length > 50
+                            ? `${record.diagnosis_summary.substring(0, 50)}...`
                             : record.diagnosis_summary}
+                        </td>
+                        <td className='p-3'>
+                          <span
+                            className={`rounded px-2 py-1 text-xs font-medium ${record.status === 'ongoing' ? 'bg-yellow-100 text-yellow-800' : ''} ${record.status === 'completed' ? 'bg-green-100 text-green-800' : ''} ${record.status === 'cancelled' ? 'bg-red-100 text-red-800' : ''} `}
+                          >
+                            {record.status.charAt(0).toUpperCase() +
+                              record.status.slice(1)}
+                          </span>
                         </td>
                         <td className='p-3'>#{record.id}</td>
                       </tr>
