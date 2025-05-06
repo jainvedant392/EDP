@@ -23,11 +23,12 @@ export default function DoctorDashboard() {
   const [selectedStatus, setSelectedStatus] = useState('All')
   const [dateRange, setDateRange] = useState('All Time')
   const [diagnosisTypes, setDiagnosisTypes] = useState(['All'])
-  const [patientIds, setPatientIds] = useState(['All']) // Added patient IDs state
-  const [selectedPatientId, setSelectedPatientId] = useState('All') // Added selected patient ID state
+  const [patientIds, setPatientIds] = useState(['All'])
+  const [selectedPatientId, setSelectedPatientId] = useState('All')
   const [doctor, setDoctor] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [patients, setPatients] = useState({}) // New state to store patient data
 
   // Status options with capitalized first letter
   const statusOptions = ['All', 'Ongoing', 'Completed', 'Cancelled']
@@ -42,6 +43,25 @@ export default function DoctorDashboard() {
       fetchDiagnoses(doctorData.id)
     }
   }, [])
+
+  // New function to fetch patient data
+  const fetchPatientDetails = async (patientId) => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await axios.get(
+        `http://localhost:8000/api/patients/${patientId}/`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      )
+      return response.data
+    } catch (err) {
+      console.error(`Error fetching patient ${patientId} details:`, err)
+      return null
+    }
+  }
 
   const fetchDiagnoses = async doctorId => {
     try {
@@ -65,16 +85,39 @@ export default function DoctorDashboard() {
         setDiagnoses([])
         setFilteredDiagnoses([])
         setDiagnosisTypes(['All'])
-        setPatientIds(['All']) // Initialize patient IDs with "All" option
+        setPatientIds(['All'])
         setLoading(false)
         return
       }
 
+      // Extract unique patient IDs to fetch their details
+      const uniquePatientIds = [...new Set(diagnosesData.map(d => 
+        typeof d.patient_id === 'object' ? d.patient_id.id : d.patient_id
+      ))]
+      
+      // Create a map of patient IDs to their full details
+      const patientMap = {}
+      
+      // Fetch patient details for each unique patient ID
+      await Promise.all(uniquePatientIds.map(async (patientId) => {
+        const patientData = await fetchPatientDetails(patientId)
+        if (patientData) {
+          patientMap[patientId] = patientData
+        }
+      }))
+      
+      // Store patient data in state
+      setPatients(patientMap)
+
       // Format diagnoses data
       const formattedDiagnoses = diagnosesData.map(diagnosis => {
-        // Extract patient name from the patient object if it exists, otherwise use ID
-        const patientName =
-          diagnosis.patient_id?.name || `Patient ${diagnosis.patient_id}`
+        // Get patient ID properly regardless of format
+        const patientId = typeof diagnosis.patient_id === 'object' 
+          ? diagnosis.patient_id.id 
+          : diagnosis.patient_id
+          
+        // Get patient name from our fetched patient data, fallback to ID if not found
+        const patientName = patientMap[patientId]?.name || `Patient ${patientId}`
 
         // Format date and time
         const date = new Date(diagnosis.diagnosis_date)
@@ -102,10 +145,7 @@ export default function DoctorDashboard() {
           date: formattedDate,
           time: formattedTime,
           patientName: patientName,
-          patientId:
-            typeof diagnosis.patient_id === 'object'
-              ? diagnosis.patient_id.id
-              : diagnosis.patient_id,
+          patientId: patientId,
           diagnosis: diagnosisSummary,
           status:
             diagnosis.status.charAt(0).toUpperCase() +
@@ -130,11 +170,11 @@ export default function DoctorDashboard() {
       setDiagnosisTypes(uniqueDiagnoses)
 
       // Extract unique patient IDs for filter
-      const uniquePatientIds = [
+      const filterPatientIds = [
         'All',
-        ...new Set(formattedDiagnoses.map(d => d.patientId))
+        ...uniquePatientIds
       ]
-      setPatientIds(uniquePatientIds)
+      setPatientIds(filterPatientIds)
 
       setLoading(false)
     } catch (err) {
@@ -228,6 +268,12 @@ export default function DoctorDashboard() {
     setSelectedStatus('All')
     setSelectedPatientId('All')
     setDateRange('All Time')
+  }
+
+  // Format patient ID display for the dropdown
+  const formatPatientIdDisplay = (id) => {
+    if (id === 'All') return 'All'
+    return patients[id]?.name ? `${patients[id].name} (ID: ${id})` : `ID: ${id}`
   }
 
   // Stats calculation
@@ -441,18 +487,18 @@ export default function DoctorDashboard() {
           </Select>
         </div>
 
-        {/* New Patient ID Filter */}
+        {/* Updated Patient Filter with Names */}
         <div className='rounded-full border border-[#18B7CD] shadow-sm hover:border-[#0da2b8]'>
           <Select
             value={selectedPatientId}
             onValueChange={handlePatientIdChange}
           >
-            <SelectTrigger className='flex h-8 w-40 cursor-pointer items-center justify-between rounded-full border-none bg-white px-3 text-black'>
+            <SelectTrigger className='flex h-8 w-56 cursor-pointer items-center justify-between rounded-full border-none bg-white px-3 text-black'>
               <SelectValue
-                placeholder='Patient ID'
+                placeholder='Patient'
                 className='text-sm font-medium'
               >
-                {selectedPatientId === 'All' ? 'Patient ID' : selectedPatientId}
+                {selectedPatientId === 'All' ? 'Patient' : formatPatientIdDisplay(selectedPatientId)}
               </SelectValue>
             </SelectTrigger>
             <SelectContent className='z-50 mt-1 max-h-60 overflow-y-auto rounded-md border border-[#18B7CD] bg-white px-3 shadow-md'>
@@ -462,7 +508,7 @@ export default function DoctorDashboard() {
                   value={id}
                   className='cursor-pointer py-2 hover:bg-[#e8f7fa]'
                 >
-                  {id}
+                  {formatPatientIdDisplay(id)}
                 </SelectItem>
               ))}
             </SelectContent>
